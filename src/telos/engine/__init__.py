@@ -5,6 +5,12 @@ Parameters (brackets, thresholds, deduction amounts) are injected via
 ``telos.params`` parameter packs — never hardcoded here.
 """
 
+from telos.engine.amt_guard import (
+    AmtGuardInputs,
+    AmtReviewRequired,
+    AmtScreenResult,
+    amt_screen,
+)
 from telos.engine.brackets import Bracket, marginal_rate, tax_from_brackets
 from telos.engine.form1040 import Form1040Inputs, Form1040Result, assemble_1040
 from telos.engine.form8959 import Form8959Result, MissingMedicareWagesError, form8959
@@ -27,6 +33,9 @@ from telos.engine.tax_lookup import line16_tax, line16_tax_amount, tax_from_tabl
 from telos.engine.trace import Traced, traced_sum
 
 __all__ = [
+    "AmtGuardInputs",
+    "AmtReviewRequired",
+    "AmtScreenResult",
     "Bracket",
     "CoverageError",
     "CoverageGuard",
@@ -42,6 +51,7 @@ __all__ = [
     "Traced",
     "UnsupportedDocumentError",
     "UnsupportedFieldError",
+    "amt_screen",
     "assemble_1040",
     "choose_deduction",
     "form8959",
