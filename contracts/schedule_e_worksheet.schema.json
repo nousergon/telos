@@ -1,0 +1,141 @@
+{
+  "$defs": {
+    "LossRegime": {
+      "description": "Which limitation engine governed the arrangement (computed UPSTREAM).\n\nThe regime math is the producer's job (ktema's allocation engine, or the\npreparer whose filed return the manual path transcribes) \u2014 telos consumes\npost-cap numbers and enforces only the invariants each regime implies.",
+      "enum": [
+        "section_280a",
+        "section_469_passive",
+        "not_for_profit"
+      ],
+      "title": "LossRegime",
+      "type": "string"
+    },
+    "RentalArrangement": {
+      "additionalProperties": false,
+      "properties": {
+        "arrangement_id": {
+          "minLength": 1,
+          "title": "Arrangement Id",
+          "type": "string"
+        },
+        "contested_flags": {
+          "default": [],
+          "description": "CPA-confirm positions, preserved verbatim through the audit trail",
+          "items": {
+            "type": "string"
+          },
+          "title": "Contested Flags",
+          "type": "array"
+        },
+        "depreciation_taken": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": "0",
+          "title": "Depreciation Taken"
+        },
+        "net_income_post_caps": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "description": "the Schedule E result AFTER the regime cap \u2014 may be negative only under \u00a7469 (the post-8582 allowed loss)",
+          "title": "Net Income Post Caps"
+        },
+        "property_name": {
+          "minLength": 1,
+          "title": "Property Name",
+          "type": "string"
+        },
+        "qbi_eligible_income": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "QBI component for Form 8995-A; None = producer did not determine",
+          "title": "Qbi Eligible Income"
+        },
+        "regime": {
+          "$ref": "#/$defs/LossRegime"
+        },
+        "source": {
+          "description": "'ktema' or 'manual:<who/when>'",
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "suspended_loss_carryforward": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "default": "0",
+          "description": "\u00a7280A carryforward or \u00a7469 suspended loss, per the regime",
+          "title": "Suspended Loss Carryforward"
+        }
+      },
+      "required": [
+        "arrangement_id",
+        "property_name",
+        "regime",
+        "net_income_post_caps",
+        "source"
+      ],
+      "title": "RentalArrangement",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "arrangements": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/RentalArrangement"
+      },
+      "title": "Arrangements",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "tax_year": {
+      "title": "Tax Year",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "tax_year"
+  ],
+  "title": "ScheduleEWorksheet",
+  "type": "object"
+}
