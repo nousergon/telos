@@ -17,6 +17,12 @@ from telos.engine.guard import (
 )
 from telos.engine.qdcgt import QdcgtResult, qdcgt_worksheet
 from telos.engine.rounding import round_whole_dollar, to_decimal
+from telos.engine.schedule_a import (
+    ScheduleAInputs,
+    ScheduleAResult,
+    choose_deduction,
+    schedule_a,
+)
 from telos.engine.tax_lookup import line16_tax, line16_tax_amount, tax_from_table
 from telos.engine.trace import Traced, traced_sum
 
@@ -31,10 +37,13 @@ __all__ = [
     "Form8960Result",
     "MissingMedicareWagesError",
     "QdcgtResult",
+    "ScheduleAInputs",
+    "ScheduleAResult",
     "Traced",
     "UnsupportedDocumentError",
     "UnsupportedFieldError",
     "assemble_1040",
+    "choose_deduction",
     "form8959",
     "form8960",
     "line16_tax",
@@ -42,6 +51,7 @@ __all__ = [
     "marginal_rate",
     "qdcgt_worksheet",
     "round_whole_dollar",
+    "schedule_a",
     "tax_from_brackets",
     "tax_from_table",
     "to_decimal",
