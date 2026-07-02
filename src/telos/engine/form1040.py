@@ -59,6 +59,9 @@ class Form1040Inputs(BaseModel):
         default=_ZERO, ge=0,
         description="Form 1040 line 13 — Form 8995-A line 39 (telos-ops#16 seam)",
     )
+    credits: tuple[tuple[str, Decimal], ...] = Field(
+        default=(), description="Schedule 3 / line 19-21 credits (e.g. foreign tax credit)"
+    )
     other_taxes: tuple[tuple[str, Decimal], ...] = ()
     estimated_payments: Decimal = Field(default=_ZERO, ge=0)
     additional_medicare_withholding: Decimal = Field(
@@ -164,11 +167,21 @@ def assemble_1040(inputs: Form1040Inputs, pack: ParamPack) -> Form1040Result:
     else:
         ln["16"] = line16_tax("1040:line16 tax", ln["15"], schedule)
 
+    credit_items = [
+        Traced(label=f"credits:{name}", value=amount) for name, amount in inputs.credits
+    ]
+    credits_total = sum((c.value for c in credit_items), start=_ZERO)
+    ln["22"] = Traced(
+        label="1040:line22 tax after credits",
+        value=max(ln["16"].value - credits_total, _ZERO),
+        sources=("Form 1040 line 22 = line 18 minus line 21, floor 0",),
+        inputs=(ln["16"], *credit_items),
+    )
     other = [
         Traced(label=f"schedule2:{name}", value=amount)
         for name, amount in inputs.other_taxes
     ]
-    total_tax = traced_sum("1040:line24 total tax", [ln["16"], *other])
+    total_tax = traced_sum("1040:line24 total tax", [ln["22"], *other])
 
     withholding = traced_sum(
         "1040:line25 federal income tax withheld",

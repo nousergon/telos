@@ -46,28 +46,29 @@ def oh_inputs(**overrides):
 
 
 class TestOhioNonresident:
-    def test_duplex_shaped_return_files_but_owes_zero(self):
-        """Fed AGI 338,000; total business income 10,000 (both rentals),
-        Ohio share 4,000. BID 10,000 covers all business income; OAGI
-        328,000; MAGI 338,000 -> exemption 1,900; line 5 = 326,100;
-        line 6 = 0; line 7 = 326,100; 8a = round(2,394.32 + 3.125% *
-        226,100) = 9,460; 8b = 0. Ohio portion = 4,000 - apportioned BID
-        (4,000) = 0 -> NRC = full 9,460 -> NET TAX 0, filing still required."""
+    def test_duplex_shaped_return_small_net_tax(self):
+        """Fed AGI 338,000; total business income 10,000, Ohio share 4,000.
+        BID 10,000; OAGI 328,000; MAGI 338,000 -> exemption 1,900; line 5 =
+        326,100; line 6 = 0; line 7 = 326,100; 8a = round(2,394.32 +
+        3.125% * 226,100) = 9,460; 8b = 0. IT NRC (filed mechanics): Ohio
+        portion = 4,000 UN-netted; ratio = trunc4(324,000/328,000 =
+        0.987804...) = 0.9878; NRC = round(9,460 * 0.9878) = 9,345 ->
+        net 115. Filing required."""
         r = ohio_nonresident(oh_inputs(), OH)
         assert r.lines["3"].value == D(328_000)
         assert r.lines["4"].value == D(1_900)
         assert r.lines["8a"].value == D(9_460)
         assert r.lines["8b"].value == D(0)
-        assert r.lines["nrc"].value == D(9_460)
-        assert r.net_tax.value == D(0)
+        assert r.lines["nrc"].value == D(9_345)
+        assert r.net_tax.value == D(115)
         assert r.filing_required is True
 
     def test_bid_exhausted_ohio_tax_due(self):
         """All-Ohio business income 300,000 over the 250,000 BID: fed AGI
         320,000 -> OAGI 70,000; MAGI 320,000 -> exemption 1,900; line 5 =
         68,100; line 6 = 50,000 @ 3% = 1,500 (8b); line 7 = 18,100 -> 8a =
-        0. Ohio portion = 300,000 - 250,000 = 50,000; ratio = 20,000/70,000;
-        NRC = round(1,500 * 2/7) = 429; net = 1,071."""
+        0. Ohio portion = 300,000 UN-netted, exceeds OAGI -> ratio clamps
+        to 0 -> NRC 0 -> net = 1,500 (all-Ohio income gets no credit)."""
         r = ohio_nonresident(
             oh_inputs(
                 federal_agi=D(320_000),
@@ -79,8 +80,8 @@ class TestOhioNonresident:
         assert r.lines["6"].value == D(50_000)
         assert r.lines["8a"].value == D(0)
         assert r.lines["8b"].value == D(1_500)
-        assert r.lines["nrc"].value == D(429)
-        assert r.net_tax.value == D(1_071)
+        assert r.lines["nrc"].value == D(0)
+        assert r.net_tax.value == D(1_500)
 
     def test_ohio_rental_loss_no_tax_filing_still_flagged(self):
         r = ohio_nonresident(

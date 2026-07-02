@@ -21,6 +21,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from types import MappingProxyType
 
+from telos.engine.rounding import round_whole_dollar
 from telos.engine.tax_lookup import line16_tax
 from telos.engine.trace import Traced
 from telos.models import FilingStatus
@@ -85,10 +86,12 @@ def qdcgt_worksheet(
     ln[15] = _line(15, ln[5].value + ln[9].value, ln[5], ln[9])
     ln[16] = _line(16, max(ln[14].value - ln[15].value, _ZERO), ln[14], ln[15], note="floor 0")
     ln[17] = _line(17, min(ln[12].value, ln[16].value), ln[12], ln[16])
-    ln[18] = _line(18, ln[17].value * Decimal("0.15"), ln[17], note="15% rate")
+    ln[18] = _line(18, round_whole_dollar(ln[17].value * Decimal("0.15")), ln[17],
+                   note="15% rate, whole-dollar")
     ln[19] = _line(19, ln[9].value + ln[17].value, ln[9], ln[17])
     ln[20] = _line(20, ln[10].value - ln[19].value, ln[10], ln[19])
-    ln[21] = _line(21, ln[20].value * Decimal("0.20"), ln[20], note="20% rate")
+    ln[21] = _line(21, round_whole_dollar(ln[20].value * Decimal("0.20")), ln[20],
+                   note="20% rate, whole-dollar")
 
     schedule = pack.brackets(f"ordinary_brackets.{filing_status.value}")
     ln[22] = line16_tax("qdcgt:line22", ln[5], schedule)

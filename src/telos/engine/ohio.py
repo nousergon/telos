@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import ROUND_DOWN, Decimal
 from types import MappingProxyType
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -141,12 +141,17 @@ def ohio_nonresident(inputs: OhioNonresidentInputs, pack: ParamPack) -> OhioResu
         inputs=(ln["8a"], ln["8b"]),
     )
 
-    # IT NRC: Ohio portion of OAGI = Ohio business income net of the
-    # apportioned BID, plus Ohio nonbusiness income.
+    # IT NRC per the filed-return mechanics (verified against a real 2025
+    # TurboTax IT NRC): Section I uses the UN-NETTED Ohio-sourced business
+    # income (no BID apportionment inside the ratio), and the ratio is
+    # TRUNCATED to four decimals on the form (0.996166 -> 0.9961).
     oh_biz = max(inputs.ohio_sourced_business_income, _ZERO)
-    bid_apportioned = bid * (oh_biz / biz_total) if biz_total > 0 else _ZERO
-    ohio_portion = max(oh_biz - bid_apportioned, _ZERO) + inputs.ohio_nonbusiness_income
-    ratio = min(max((oagi - ohio_portion) / oagi, _ZERO), _ONE) if oagi > 0 else _ONE
+    ohio_portion = oh_biz + inputs.ohio_nonbusiness_income
+    if oagi > 0:
+        ratio = min(max((oagi - ohio_portion) / oagi, _ZERO), _ONE)
+        ratio = ratio.quantize(Decimal("0.0001"), rounding=ROUND_DOWN)
+    else:
+        ratio = _ONE
     ln["nrc"] = Traced(
         label="OH Schedule of Credits: nonresident credit (IT NRC)",
         value=round_whole_dollar(ln["8c"].value * ratio),
