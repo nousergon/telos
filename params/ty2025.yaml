@@ -8,7 +8,7 @@
 # (reproducing a known-correct filed TY2025 return) passes, which is the
 # strongest end-to-end verification of this pack.
 tax_year: 2025
-status: provisional
+status: final
 values:
   standard_deduction:
     # OBBBA §70102 amended IRC §63(c) for taxable years beginning in 2025,

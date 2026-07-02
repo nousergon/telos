@@ -92,6 +92,15 @@ class FullReturnInputs(BaseModel):
     schedule_e: Optional[ScheduleEWorksheet] = None  # noqa: UP045
     schedule_a: Optional[ScheduleAItems] = None  # noqa: UP045
     qbi_businesses: tuple[QbiBusiness, ...] = ()
+    other_income: tuple[tuple[str, Decimal], ...] = Field(
+        default=(), description="Schedule 1 line 8z items (e.g. crypto income)"
+    )
+    credits: tuple[tuple[str, Decimal], ...] = Field(
+        default=(), description="Schedule 3 credits (e.g. foreign tax credit)"
+    )
+    niit_state_local_tax_allocable: Decimal = Field(
+        default=_ZERO, ge=0, description="Form 8960 line 9b"
+    )
     estimated_payments: Decimal = Field(default=_ZERO, ge=0)
 
 
@@ -128,7 +137,9 @@ def compute_federal_return(inputs: FullReturnInputs, pack: ParamPack) -> Federal
 
     line7a = schd.line7a.value if schd else _ZERO
     qdcgt_ncg = schd.qdcgt_net_capital_gain.value if schd else _ZERO
-    sch1 = sche.total.value if sche else _ZERO
+    sch1 = (sche.total.value if sche else _ZERO) + sum(
+        (amount for _, amount in inputs.other_income), start=_ZERO
+    )
     wages = sum((w.wages for w in inputs.w2s), start=_ZERO)
     interest = sum((f.interest_income for f in inputs.forms_1099_int), start=_ZERO)
     ordinary_div = sum((f.ordinary_dividends for f in inputs.forms_1099_div), start=_ZERO)
@@ -185,6 +196,7 @@ def compute_federal_return(inputs: FullReturnInputs, pack: ParamPack) -> Federal
             ordinary_dividends=ordinary_div,
             rental_and_passthrough=sche.total_for_8960_line4a.value if sche else _ZERO,
             net_gain=line7a,
+            state_local_tax_allocable=inputs.niit_state_local_tax_allocable,
             magi=max(agi, _ZERO),
         ),
         pack,
@@ -203,6 +215,7 @@ def compute_federal_return(inputs: FullReturnInputs, pack: ParamPack) -> Federal
             schedule_1_income=sch1,
             itemized_deduction=itemized_for_assembly,
             qbi_deduction=qbi_amount,
+            credits=inputs.credits,
             other_taxes=tuple(other_taxes),
             estimated_payments=inputs.estimated_payments,
             additional_medicare_withholding=line25c,

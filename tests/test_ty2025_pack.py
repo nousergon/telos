@@ -27,9 +27,11 @@ def pack():
 
 
 class TestPackLoads:
-    def test_loads_as_provisional(self, pack):
+    def test_loads_as_final(self, pack):
+        """Flipped provisional -> final 2026-07-02 when the M1 replay gate
+        passed (the filed TY2025 return reproduced to the dollar)."""
         assert pack.tax_year == 2025
-        assert pack.status == "provisional"
+        assert pack.status == "final"
 
     def test_every_status_has_brackets_and_deduction(self, pack):
         for fs in (
