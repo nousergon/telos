@@ -1,0 +1,20 @@
+# SYNTHETIC example pack — exercises the params contract and the engine
+# mechanics in tests. These are NOT real tax values for any year. Real packs
+# (ty2025.yaml, ty2026.yaml) are authored from primary sources (Revenue
+# Procedures / final form instructions) with one citation per value, and are
+# tracked as backlog work — never transcribed from memory.
+tax_year: 1999
+status: example
+values:
+  standard_deduction:
+    single:
+      value: 10000
+      source: "SYNTHETIC example pack — not a real tax value"
+    married_filing_jointly:
+      value: 20000
+      source: "SYNTHETIC example pack — not a real tax value"
+  ordinary_brackets:
+    single:
+      - {upto: 10000, rate: "0.10", source: "SYNTHETIC example pack — not a real tax value"}
+      - {upto: 40000, rate: "0.20", source: "SYNTHETIC example pack — not a real tax value"}
+      - {upto: null, rate: "0.30", source: "SYNTHETIC example pack — not a real tax value"}

@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "telos"
+version = "0.1.0"
+description = "telos (Greek τέλος — completion, purpose; the ancient word for a tax): a deterministic personal tax engine. LLM document ingestion in front, pure-code computation in the middle, official-form output at the back."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Brian McMahon" }]
+license = { text = "AGPL-3.0-only" }
+keywords = ["tax", "taxes", "irs", "1040", "deterministic", "personal-finance"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent",
+    "Typing :: Typed",
+]
+dependencies = [
+    "pydantic>=2.0",
+    "pyyaml>=6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/nousergon/telos"
+Repository = "https://github.com/nousergon/telos"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+telos = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+    "personal: tests that require the operator's own tax data in TELOS_DATA_DIR (never in CI; auto-skipped when the data dir is absent)",
+]
+
+[tool.coverage.run]
+source = ["telos"]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
