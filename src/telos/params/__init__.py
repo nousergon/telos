@@ -22,9 +22,13 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from telos.engine.brackets import Bracket, validate_brackets
-from telos.engine.rounding import to_decimal
-from telos.engine.trace import Traced
+# NOTE: engine imports happen at CALL time, not import time — telos.params is
+# imported by engine modules (amt_guard, form1040, ...), and importing any
+# telos.engine submodule executes the engine package __init__, which would
+# close a circular import back into this module during interpreter startup.
+if False:  # pragma: no cover — typing aid only
+    from telos.engine.brackets import Bracket
+    from telos.engine.trace import Traced
 
 _UNVERIFIED_MARKERS = ("SYNTHETIC", "UNVERIFIED", "TODO", "FIXME")
 
@@ -119,6 +123,9 @@ class ParamPack(BaseModel):
 
     def get(self, path: str) -> Traced:
         """A scalar parameter as a Traced value — the citation rides along."""
+        from telos.engine.rounding import to_decimal
+        from telos.engine.trace import Traced
+
         node = self._resolve(path)
         if not _is_scalar_leaf(node):
             raise ParamPackError(f"{path!r} is not a scalar parameter")
@@ -130,6 +137,9 @@ class ParamPack(BaseModel):
 
     def brackets(self, path: str) -> list[Bracket]:
         """A bracket schedule, validated before it is handed to the engine."""
+        from telos.engine.brackets import Bracket, validate_brackets
+        from telos.engine.rounding import to_decimal
+
         node = self._resolve(path)
         if not _is_bracket_leaf(node):
             raise ParamPackError(f"{path!r} is not a bracket schedule")

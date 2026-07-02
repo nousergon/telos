@@ -5,7 +5,7 @@
 # base creates a real discontinuity at $26,050) — they are implemented
 # exactly as printed, never re-derived.
 tax_year: 2025
-status: provisional
+status: final
 values:
   nonbusiness_brackets:
     zero_limit:
