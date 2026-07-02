@@ -16,6 +16,7 @@ from telos.engine.form1040 import Form1040Inputs, Form1040Result, assemble_1040
 from telos.engine.form8949 import BoxTotals, WashSaleRiskError, check_wash_risk, form8949_totals
 from telos.engine.form8959 import Form8959Result, MissingMedicareWagesError, form8959
 from telos.engine.form8960 import Form8960Inputs, Form8960Result, form8960
+from telos.engine.form8995a import Form8995AInputs, Form8995AResult, QbiBusiness, form8995a
 from telos.engine.guard import (
     CoverageError,
     CoverageGuard,
@@ -50,8 +51,11 @@ __all__ = [
     "Form8959Result",
     "Form8960Inputs",
     "Form8960Result",
+    "Form8995AInputs",
+    "Form8995AResult",
     "LotReconciliation",
     "MissingMedicareWagesError",
+    "QbiBusiness",
     "QdcgtResult",
     "ScheduleAInputs",
     "ScheduleAResult",
@@ -69,6 +73,7 @@ __all__ = [
     "form8949_totals",
     "form8959",
     "form8960",
+    "form8995a",
     "line16_tax",
     "line16_tax_amount",
     "marginal_rate",
