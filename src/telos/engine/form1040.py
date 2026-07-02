@@ -61,6 +61,10 @@ class Form1040Inputs(BaseModel):
     )
     other_taxes: tuple[tuple[str, Decimal], ...] = ()
     estimated_payments: Decimal = Field(default=_ZERO, ge=0)
+    additional_medicare_withholding: Decimal = Field(
+        default=_ZERO, ge=0,
+        description="Form 1040 line 25c — Form 8959 line 24 (withholding credit)",
+    )
 
 
 @dataclass(frozen=True)
@@ -176,7 +180,11 @@ def assemble_1040(inputs: Form1040Inputs, pack: ParamPack) -> Form1040Result:
            for f in inputs.forms_1099_div],
     )
     estimated = Traced(label="1040:line26 estimated payments", value=inputs.estimated_payments)
-    total_payments = traced_sum("1040:line33 total payments", [withholding, estimated])
+    line25c = Traced(
+        label="1040:line25c additional Medicare withholding (Form 8959 line 24)",
+        value=inputs.additional_medicare_withholding,
+    )
+    total_payments = traced_sum("1040:line33 total payments", [withholding, line25c, estimated])
     ln["25"] = withholding
     ln["26"] = estimated
 

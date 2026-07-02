@@ -1,0 +1,77 @@
+{
+  "federal": {
+    "tax_year": 2025,
+    "filing_status": "single",
+    "w2s": [
+      {
+        "employer": "SyntheticCorp",
+        "wages": 200000,
+        "federal_income_tax_withheld": 40000,
+        "medicare_wages": 210000,
+        "medicare_tax_withheld": 3135
+      }
+    ],
+    "forms_1099_int": [{"payer": "SynthBank", "interest_income": 1000}],
+    "forms_1099_div": [
+      {"payer": "SynthBroker", "ordinary_dividends": 8000, "qualified_dividends": 6000}
+    ],
+    "realized_lots": {
+      "schema_version": "1.0.0",
+      "lots": [
+        {
+          "description": "SYNTH",
+          "date_acquired": "2023-01-15",
+          "date_sold": "2025-06-01",
+          "proceeds": 50000,
+          "cost_basis": 30000,
+          "term": "long",
+          "box": "D",
+          "source": "synthetic"
+        }
+      ]
+    },
+    "schedule_e": {
+      "schema_version": "1.0.0",
+      "tax_year": 2025,
+      "arrangements": [
+        {
+          "arrangement_id": "synth-room",
+          "property_name": "Synthetic room",
+          "regime": "section_280a",
+          "net_income_post_caps": 5000,
+          "depreciation_taken": 1200,
+          "qbi_eligible_income": 5000,
+          "source": "synthetic"
+        }
+      ]
+    },
+    "schedule_a": {
+      "state_local_income_or_sales_tax": 3000,
+      "real_estate_taxes": 14000,
+      "mortgage_interest_1098": 18000,
+      "charitable_cash": 2000
+    },
+    "qbi_businesses": [
+      {"name": "synth-room", "qbi": 5000, "ubia": 100000}
+    ]
+  },
+  "golden": {
+    "agi": 234000,
+    "deduction": 37000,
+    "qbi_deduction": 1000,
+    "taxable_income": 196000,
+    "line16_tax": 37547,
+    "niit": 1292,
+    "additional_medicare": 90,
+    "additional_medicare_withholding": 90,
+    "total_tax": 38929,
+    "withholding": 40000,
+    "total_payments": 40090,
+    "balance_due": -1161,
+    "schedule_d_line16": 20000,
+    "capital_gain_line7": 20000,
+    "itemized_total": 37000,
+    "salt_5e": 17000,
+    "schedule_e_total": 5000
+  }
+}
