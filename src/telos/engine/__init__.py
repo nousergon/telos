@@ -23,6 +23,7 @@ from telos.engine.guard import (
     UnsupportedDocumentError,
     UnsupportedFieldError,
 )
+from telos.engine.ohio import OhioNonresidentInputs, OhioResult, ohio_nonresident
 from telos.engine.qdcgt import QdcgtResult, qdcgt_worksheet
 from telos.engine.reconcile_lots import FieldMismatch, LotReconciliation, reconcile_lots
 from telos.engine.rounding import round_whole_dollar, to_decimal
@@ -36,6 +37,7 @@ from telos.engine.schedule_d import ScheduleDInputs, ScheduleDResult, schedule_d
 from telos.engine.schedule_e import ScheduleEResult, require_qbi_total, schedule_e
 from telos.engine.tax_lookup import line16_tax, line16_tax_amount, tax_from_table
 from telos.engine.trace import Traced, traced_sum
+from telos.engine.wa_excise import WaExciseDetermination, wa_excise_check
 
 __all__ = [
     "AmtGuardInputs",
@@ -55,6 +57,8 @@ __all__ = [
     "Form8995AResult",
     "LotReconciliation",
     "MissingMedicareWagesError",
+    "OhioNonresidentInputs",
+    "OhioResult",
     "QbiBusiness",
     "QdcgtResult",
     "ScheduleAInputs",
@@ -65,6 +69,7 @@ __all__ = [
     "Traced",
     "UnsupportedDocumentError",
     "UnsupportedFieldError",
+    "WaExciseDetermination",
     "WashSaleRiskError",
     "amt_screen",
     "assemble_1040",
@@ -77,6 +82,7 @@ __all__ = [
     "line16_tax",
     "line16_tax_amount",
     "marginal_rate",
+    "ohio_nonresident",
     "qdcgt_worksheet",
     "reconcile_lots",
     "require_qbi_total",
@@ -88,4 +94,5 @@ __all__ = [
     "tax_from_table",
     "to_decimal",
     "traced_sum",
+    "wa_excise_check",
 ]

@@ -1,0 +1,20 @@
+# TY2025 Washington capital gains excise tax parameters. Transcribed
+# 2026-07-02 from dor.wa.gov (capital gains tax page + the 'New tiered rates'
+# special notice): 2025 standard deduction $278,000 (inflation-adjusted from
+# $270,000); 7% on the first $1,000,000 of taxable WA capital gains, plus an
+# additional 2.9% above $1,000,000 (tiered structure new for 2025).
+tax_year: 2025
+status: provisional
+values:
+  standard_deduction:
+    value: 278000
+    source: "dor.wa.gov capital gains tax page (2025 inflation-adjusted standard deduction, UNVERIFIED against the final 2025 WA return form - verify at filing)"
+  rate:
+    value: "0.07"
+    source: "RCW 82.87.040; dor.wa.gov capital gains tax page (7%)"
+  surcharge_threshold:
+    value: 1000000
+    source: "dor.wa.gov special notice 'New tiered rates for Washington's capital gains tax' (2025-)"
+  surcharge_rate:
+    value: "0.029"
+    source: "dor.wa.gov special notice: additional 2.9% above $1,000,000 taxable"

@@ -1,0 +1,57 @@
+# TY2025 Ohio parameter pack. Every value transcribed 2026-07-02 from the
+# official 2025 Ohio IT 1040/SD 100 instruction booklet (fetched from
+# tax.ohio.gov / dam.assets.ohio.gov, printed version dated 2025-11-27).
+# NOTE the printed bracket constants are NOT algebraically chained (the $342
+# base creates a real discontinuity at $26,050) — they are implemented
+# exactly as printed, never re-derived.
+tax_year: 2025
+status: provisional
+values:
+  nonbusiness_brackets:
+    zero_limit:
+      value: 26050
+      source: "2025 Ohio IT 1040 instructions p.18 tax brackets: '0 - $26,050: 0.000%'"
+    mid_base:
+      value: 342
+      source: "2025 Ohio IT 1040 instructions p.18: '$342.00 plus 2.750% of the amount in excess of $26,050'"
+    mid_rate:
+      value: "0.0275"
+      source: "2025 Ohio IT 1040 instructions p.18 (2.750%)"
+    mid_limit:
+      value: 100000
+      source: "2025 Ohio IT 1040 instructions p.18 ('$26,050 - $100,000' row)"
+    top_base:
+      value: "2394.32"
+      source: "2025 Ohio IT 1040 instructions p.18: '$2,394.32 plus 3.125% of the amount in excess of $100,000'"
+    top_rate:
+      value: "0.03125"
+      source: "2025 Ohio IT 1040 instructions p.18 (3.125%; lowered for 2025)"
+  exemption:
+    tier1_magi_limit:
+      value: 40000
+      source: "2025 Ohio IT 1040 instructions p.17 exemption table: MAGI $40,000 or less -> $2,400"
+    tier1_amount:
+      value: 2400
+      source: "2025 Ohio IT 1040 instructions p.17"
+    tier2_magi_limit:
+      value: 80000
+      source: "2025 Ohio IT 1040 instructions p.17: $40,001-$80,000 -> $2,150"
+    tier2_amount:
+      value: 2150
+      source: "2025 Ohio IT 1040 instructions p.17"
+    tier3_magi_limit:
+      value: 749999
+      source: "2025 Ohio IT 1040 instructions p.17: $80,001-$749,999 -> $1,900"
+    tier3_amount:
+      value: 1900
+      source: "2025 Ohio IT 1040 instructions p.17: $750,000 or greater -> $0"
+  business_income_deduction:
+    cap:
+      value: 250000
+      source: "2025 Ohio IT 1040 instructions p.11: 'deduct the first $250,000 ($125,000 for married separate filers) of their business income'"
+    cap_married_filing_separately:
+      value: 125000
+      source: "2025 Ohio IT 1040 instructions p.11"
+    flat_rate_on_remainder:
+      value: "0.03"
+      source: "2025 Ohio IT 1040 instructions p.11: 'any business income not deducted is taxed at a flat 3%'"
