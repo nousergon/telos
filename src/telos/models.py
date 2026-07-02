@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 from enum import StrEnum
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -35,6 +36,15 @@ class W2(_Doc):
     employer: str
     wages: Decimal = Field(ge=0, description="Box 1")
     federal_income_tax_withheld: Decimal = Field(default=Decimal(0), ge=0, description="Box 2")
+    # Medicare boxes: None means "not provided" — Form 8959 REFUSES to run on a
+    # W-2 without box 5 (box 1 is NOT a valid proxy: pre-tax 401(k) deferrals
+    # make them differ). Fail loud, never substitute.
+    medicare_wages: Optional[Decimal] = Field(  # noqa: UP045 — pydantic-friendly
+        default=None, ge=0, description="Box 5"
+    )
+    medicare_tax_withheld: Optional[Decimal] = Field(  # noqa: UP045
+        default=None, ge=0, description="Box 6"
+    )
 
 
 class Form1099Int(_Doc):
