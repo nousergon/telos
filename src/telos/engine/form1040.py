@@ -55,6 +55,10 @@ class Form1040Inputs(BaseModel):
     )
     schedule_1_income: Decimal = _ZERO
     itemized_deduction: Optional[Decimal] = Field(default=None, ge=0)  # noqa: UP045
+    qbi_deduction: Decimal = Field(
+        default=_ZERO, ge=0,
+        description="Form 1040 line 13 — Form 8995-A line 39 (telos-ops#16 seam)",
+    )
     other_taxes: tuple[tuple[str, Decimal], ...] = ()
     estimated_payments: Decimal = Field(default=_ZERO, ge=0)
 
@@ -124,11 +128,16 @@ def assemble_1040(inputs: Form1040Inputs, pack: ParamPack) -> Form1040Result:
         std = pack.get(f"standard_deduction.{fs.value}")
         ln["12"] = std.derive("1040:line12 standard deduction", std.value)
 
+    ln["13"] = Traced(
+        label="1040:line13 QBI deduction",
+        value=inputs.qbi_deduction,
+        sources=("Form 8995-A line 39 (telos-ops#16 seam)",),
+    )
     ln["15"] = Traced(
         label="1040:line15 taxable income",
-        value=max(ln["11"].value - ln["12"].value, _ZERO),
+        value=max(ln["11"].value - ln["12"].value - ln["13"].value, _ZERO),
         sources=("Form 1040, line 15 (floor 0)",),
-        inputs=(ln["11"], ln["12"]),
+        inputs=(ln["11"], ln["12"], ln["13"]),
     )
 
     schedule = pack.brackets(f"ordinary_brackets.{fs.value}")
