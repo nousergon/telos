@@ -1,0 +1,30 @@
+Telos — deterministic personal tax engine
+Copyright (C) 2026 Brian McMahon / Nous Ergon
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License
+for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+---
+
+Telos is NOT tax advice and is NOT a tax return preparation service. It is
+software that performs arithmetic described in public IRS forms,
+instructions, and revenue procedures, each cited at the point of use.
+Outputs carry no accuracy guarantee; users are responsible for their own
+returns. Telos is not a filer of record and does not e-file.
+
+Third-party components and data:
+
+- Tax forms, instructions, and parameter values are U.S. government works
+  published by the Internal Revenue Service (irs.gov) and state revenue
+  agencies, not subject to copyright. Each parameter in params/ cites its
+  primary source (Revenue Procedure or form instruction).

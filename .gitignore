@@ -1,0 +1,31 @@
+# --- personal tax data: NEVER in version control (history goes public at the AGPL flip) ---
+data/
+inputs/
+out/
+output/
+*.pdf
+!forms/templates/**/*.pdf   # blank official IRS templates only (public-domain US gov works)
+*.p12
+*.key
+
+# secrets / env
+.env
+.env.*
+!.env.example
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+dist/
+build/
+*.egg-info/
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/
