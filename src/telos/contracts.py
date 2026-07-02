@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 from enum import StrEnum
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -92,3 +92,73 @@ class RealizedLots(BaseModel):
 def realized_lots_json_schema() -> dict:
     """The contract artifact, generated — never hand-edited."""
     return RealizedLots.model_json_schema()
+
+
+SCHEDULE_E_SCHEMA_VERSION = "1.0.0"
+
+
+class LossRegime(StrEnum):
+    """Which limitation engine governed the arrangement (computed UPSTREAM).
+
+    The regime math is the producer's job (ktema's allocation engine, or the
+    preparer whose filed return the manual path transcribes) — telos consumes
+    post-cap numbers and enforces only the invariants each regime implies.
+    """
+
+    SECTION_280A = "section_280a"  # room-in-home: deductions capped at income
+    SECTION_469_PASSIVE = "section_469_passive"  # standalone rental passive rules
+    NOT_FOR_PROFIT = "not_for_profit"  # below-FMV / §183: no loss allowed
+
+
+class RentalArrangement(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    arrangement_id: str = Field(min_length=1)
+    property_name: str = Field(min_length=1)
+    regime: LossRegime
+    net_income_post_caps: Decimal = Field(
+        description="the Schedule E result AFTER the regime cap — may be negative "
+        "only under §469 (the post-8582 allowed loss)"
+    )
+    depreciation_taken: Decimal = Field(default=_ZERO, ge=0)
+    suspended_loss_carryforward: Decimal = Field(
+        default=_ZERO, ge=0,
+        description="§280A carryforward or §469 suspended loss, per the regime",
+    )
+    qbi_eligible_income: Optional[Decimal] = Field(  # noqa: UP045 — pydantic-friendly
+        default=None,
+        description="QBI component for Form 8995-A; None = producer did not determine",
+    )
+    contested_flags: tuple[str, ...] = Field(
+        default=(),
+        description="CPA-confirm positions, preserved verbatim through the audit trail",
+    )
+    source: str = Field(min_length=1, description="'ktema' or 'manual:<who/when>'")
+
+    @model_validator(mode="after")
+    def _regime_invariants(self) -> RentalArrangement:
+        if self.regime is LossRegime.NOT_FOR_PROFIT and self.net_income_post_caps < 0:
+            raise ValueError(
+                f"{self.arrangement_id}: not-for-profit (§183) arrangements cannot "
+                f"show a loss — no loss is allowed under that regime"
+            )
+        if self.regime is LossRegime.SECTION_280A and self.net_income_post_caps < 0:
+            raise ValueError(
+                f"{self.arrangement_id}: §280A caps deductions at rental income — "
+                f"post-cap net cannot be negative (the excess belongs in "
+                f"suspended_loss_carryforward)"
+            )
+        return self
+
+
+class ScheduleEWorksheet(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: Literal["1.0.0"] = SCHEDULE_E_SCHEMA_VERSION
+    tax_year: int
+    arrangements: tuple[RentalArrangement, ...] = ()
+
+
+def schedule_e_worksheet_json_schema() -> dict:
+    """The contract artifact, generated — never hand-edited."""
+    return ScheduleEWorksheet.model_json_schema()

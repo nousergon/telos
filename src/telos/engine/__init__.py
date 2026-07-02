@@ -32,6 +32,7 @@ from telos.engine.schedule_a import (
     schedule_a,
 )
 from telos.engine.schedule_d import ScheduleDInputs, ScheduleDResult, schedule_d
+from telos.engine.schedule_e import ScheduleEResult, require_qbi_total, schedule_e
 from telos.engine.tax_lookup import line16_tax, line16_tax_amount, tax_from_table
 from telos.engine.trace import Traced, traced_sum
 
@@ -56,6 +57,7 @@ __all__ = [
     "ScheduleAResult",
     "ScheduleDInputs",
     "ScheduleDResult",
+    "ScheduleEResult",
     "Traced",
     "UnsupportedDocumentError",
     "UnsupportedFieldError",
@@ -72,9 +74,11 @@ __all__ = [
     "marginal_rate",
     "qdcgt_worksheet",
     "reconcile_lots",
+    "require_qbi_total",
     "round_whole_dollar",
     "schedule_a",
     "schedule_d",
+    "schedule_e",
     "tax_from_brackets",
     "tax_from_table",
     "to_decimal",
