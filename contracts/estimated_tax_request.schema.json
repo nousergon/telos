@@ -1,0 +1,104 @@
+{
+  "$defs": {
+    "FilingStatus": {
+      "enum": [
+        "single",
+        "married_filing_jointly",
+        "married_filing_separately",
+        "head_of_household",
+        "qualifying_surviving_spouse"
+      ],
+      "title": "FilingStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "1040-ES / 2210 quarterly-voucher inputs \u2014 Metron-callable (telos-ops#7).\n\nPlain typed data only (filing status + prior/current-year totals): a\ncaller assembles this from its own tax-liability estimate without\nimporting anything from ``telos.engine``. Feed it to\n``telos.engine.estimated.compute_estimated_tax`` alongside a\n``ParamPack`` for the target tax year.",
+  "properties": {
+    "current_year_projected_tax": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "description": "projected current-year total tax liability",
+      "title": "Current Year Projected Tax"
+    },
+    "current_year_withholding": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "default": "0",
+      "description": "current-year withholding, treated as paid ratably across the year",
+      "title": "Current Year Withholding"
+    },
+    "filing_status": {
+      "$ref": "#/$defs/FilingStatus"
+    },
+    "prior_year_agi": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Prior Year Agi"
+    },
+    "prior_year_return_covered_12_months": {
+      "default": true,
+      "description": "the 100%/110%-of-prior-year safe harbors require the prior-year return to have covered a full 12-month period (26 U.S.C. \u00a76654(d)(1)(B)(ii)); when False only the 90%-of-current-year harbor is available",
+      "title": "Prior Year Return Covered 12 Months",
+      "type": "boolean"
+    },
+    "prior_year_tax": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "description": "prior-year total tax (Form 2210 line 8 equivalent)",
+      "title": "Prior Year Tax"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "use_annualized_income_method": {
+      "default": false,
+      "description": "annualized-income-installment method (Schedule AI) for unevenly distributed income \u2014 NOT YET IMPLEMENTED (telos-ops#7 stub); compute_estimated_tax raises rather than silently falling back to the even-installment method",
+      "title": "Use Annualized Income Method",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "filing_status",
+    "prior_year_tax",
+    "prior_year_agi",
+    "current_year_projected_tax"
+  ],
+  "title": "EstimatedTaxRequest",
+  "type": "object"
+}

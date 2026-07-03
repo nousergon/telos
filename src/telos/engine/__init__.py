@@ -12,6 +12,12 @@ from telos.engine.amt_guard import (
     amt_screen,
 )
 from telos.engine.brackets import Bracket, marginal_rate, tax_from_brackets
+from telos.engine.estimated import (
+    AnnualizedIncomeMethodNotImplementedError,
+    EstimatedTaxResult,
+    QuarterlyVoucher,
+    compute_estimated_tax,
+)
 from telos.engine.form1040 import Form1040Inputs, Form1040Result, assemble_1040
 from telos.engine.form8949 import BoxTotals, WashSaleRiskError, check_wash_risk, form8949_totals
 from telos.engine.form8959 import Form8959Result, MissingMedicareWagesError, form8959
@@ -43,10 +49,12 @@ __all__ = [
     "AmtGuardInputs",
     "AmtReviewRequired",
     "AmtScreenResult",
+    "AnnualizedIncomeMethodNotImplementedError",
     "BoxTotals",
     "Bracket",
     "CoverageError",
     "CoverageGuard",
+    "EstimatedTaxResult",
     "FieldMismatch",
     "Form1040Inputs",
     "Form1040Result",
@@ -61,6 +69,7 @@ __all__ = [
     "OhioResult",
     "QbiBusiness",
     "QdcgtResult",
+    "QuarterlyVoucher",
     "ScheduleAInputs",
     "ScheduleAResult",
     "ScheduleDInputs",
@@ -75,6 +84,7 @@ __all__ = [
     "assemble_1040",
     "check_wash_risk",
     "choose_deduction",
+    "compute_estimated_tax",
     "form8949_totals",
     "form8959",
     "form8960",

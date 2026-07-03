@@ -21,6 +21,8 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from telos.models import FilingStatus
+
 REALIZED_LOTS_SCHEMA_VERSION = "1.0.0"
 
 _ZERO = Decimal(0)
@@ -162,3 +164,56 @@ class ScheduleEWorksheet(BaseModel):
 def schedule_e_worksheet_json_schema() -> dict:
     """The contract artifact, generated — never hand-edited."""
     return ScheduleEWorksheet.model_json_schema()
+
+
+ESTIMATED_TAX_REQUEST_SCHEMA_VERSION = "1.0.0"
+
+
+class EstimatedTaxRequest(BaseModel):
+    """1040-ES / 2210 quarterly-voucher inputs — Metron-callable (telos-ops#7).
+
+    Plain typed data only (filing status + prior/current-year totals): a
+    caller assembles this from its own tax-liability estimate without
+    importing anything from ``telos.engine``. Feed it to
+    ``telos.engine.estimated.compute_estimated_tax`` alongside a
+    ``ParamPack`` for the target tax year.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: Literal["1.0.0"] = ESTIMATED_TAX_REQUEST_SCHEMA_VERSION
+    filing_status: FilingStatus
+    prior_year_tax: Decimal = Field(
+        ge=0, description="prior-year total tax (Form 2210 line 8 equivalent)"
+    )
+    prior_year_agi: Decimal = Field(ge=0)
+    prior_year_return_covered_12_months: bool = Field(
+        default=True,
+        description=(
+            "the 100%/110%-of-prior-year safe harbors require the prior-year "
+            "return to have covered a full 12-month period (26 U.S.C. "
+            "§6654(d)(1)(B)(ii)); when False only the 90%-of-current-year "
+            "harbor is available"
+        ),
+    )
+    current_year_projected_tax: Decimal = Field(
+        ge=0, description="projected current-year total tax liability"
+    )
+    current_year_withholding: Decimal = Field(
+        default=_ZERO, ge=0,
+        description="current-year withholding, treated as paid ratably across the year",
+    )
+    use_annualized_income_method: bool = Field(
+        default=False,
+        description=(
+            "annualized-income-installment method (Schedule AI) for unevenly "
+            "distributed income — NOT YET IMPLEMENTED (telos-ops#7 stub); "
+            "compute_estimated_tax raises rather than silently falling back "
+            "to the even-installment method"
+        ),
+    )
+
+
+def estimated_tax_request_json_schema() -> dict:
+    """The contract artifact, generated — never hand-edited."""
+    return EstimatedTaxRequest.model_json_schema()
