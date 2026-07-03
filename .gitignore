@@ -8,6 +8,11 @@ output/
 *.p12
 *.key
 
+# --- tuned ingestion prompts: real *.txt live in the private telos-ops repo ---
+# only the *.txt.example stubs are committed here (public AGPL); the tuned
+# prompts are loaded at runtime and must never be committed.
+src/telos/ingest/prompts/*.txt
+
 # secrets / env
 .env
 .env.*
