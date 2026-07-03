@@ -11,10 +11,105 @@
       "title": "FilingStatus",
       "type": "string"
     },
+    "OhioSection": {
+      "additionalProperties": false,
+      "description": "OH nonresident projected liability + IT 1040ES estimated-payment\nadvisory (telos-ops#21). Optional/additive on ``TaxProjection`` (schema\n1.1.0): present only when the projection was run with an OH parameter\npack. Assumes the scenario's ENTIRE Schedule E is Ohio-source (the\nduplex) \u2014 ``telos.engine.ohio`` does not support multi-state Schedule E\nallocation, and neither does this section.",
+      "properties": {
+        "balance_after_withholding": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Balance After Withholding"
+        },
+        "citations": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "estimated_payments_advisable": {
+          "title": "Estimated Payments Advisable",
+          "type": "boolean"
+        },
+        "filing_required": {
+          "title": "Filing Required",
+          "type": "boolean"
+        },
+        "message": {
+          "description": "the determination, with its computation, in one line",
+          "title": "Message",
+          "type": "string"
+        },
+        "net_tax": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "description": "OH IT 1040 net tax after the nonresident credit",
+          "title": "Net Tax"
+        },
+        "required_annual_payment": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "description": "OH IT 1040ES required annual payment (lesser-of-harbors)",
+          "title": "Required Annual Payment"
+        }
+      },
+      "required": [
+        "filing_required",
+        "net_tax",
+        "estimated_payments_advisable",
+        "required_annual_payment",
+        "balance_after_withholding",
+        "message"
+      ],
+      "title": "OhioSection",
+      "type": "object"
+    },
     "PaymentHeadline": {
       "additionalProperties": false,
       "description": "The one-glance answer: should a payment be made, how much, by when.",
       "properties": {
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "next_due_date": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "ISO date of the next unpaid installment; None if all past",
+          "title": "Next Due Date"
+        },
         "payment_recommended": {
           "title": "Payment Recommended",
           "type": "boolean"
@@ -32,23 +127,6 @@
           ],
           "description": "overdue shortfalls + the next upcoming installment's shortfall",
           "title": "Recommended Amount"
-        },
-        "next_due_date": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "ISO date of the next unpaid installment; None if all past",
-          "title": "Next Due Date"
-        },
-        "message": {
-          "title": "Message",
-          "type": "string"
         }
       },
       "required": [
@@ -74,6 +152,60 @@
             }
           ],
           "title": "Agi"
+        },
+        "balance_due": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "description": "total tax minus all payments; negative = refund",
+          "title": "Balance Due"
+        },
+        "effective_rate_on_agi": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "description": "total_tax / AGI, 4dp; 0 when AGI <= 0",
+          "title": "Effective Rate On Agi"
+        },
+        "estimated_payments_made": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Estimated Payments Made"
+        },
+        "marginal_ordinary_rate": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "description": "ordinary bracket rate at projected taxable income",
+          "title": "Marginal Ordinary Rate"
         },
         "taxable_income": {
           "anyOf": [
@@ -115,60 +247,6 @@
           ],
           "description": "lines 25a-25c, treated as ratable",
           "title": "Total Withholding"
-        },
-        "estimated_payments_made": {
-          "anyOf": [
-            {
-              "minimum": 0.0,
-              "type": "number"
-            },
-            {
-              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-              "type": "string"
-            }
-          ],
-          "title": "Estimated Payments Made"
-        },
-        "balance_due": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-              "type": "string"
-            }
-          ],
-          "description": "total tax minus all payments; negative = refund",
-          "title": "Balance Due"
-        },
-        "effective_rate_on_agi": {
-          "anyOf": [
-            {
-              "minimum": 0.0,
-              "type": "number"
-            },
-            {
-              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-              "type": "string"
-            }
-          ],
-          "description": "total_tax / AGI, 4dp; 0 when AGI <= 0",
-          "title": "Effective Rate On Agi"
-        },
-        "marginal_ordinary_rate": {
-          "anyOf": [
-            {
-              "minimum": 0.0,
-              "type": "number"
-            },
-            {
-              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-              "type": "string"
-            }
-          ],
-          "description": "ordinary bracket rate at projected taxable income",
-          "title": "Marginal Ordinary Rate"
         }
       },
       "required": [
@@ -188,29 +266,10 @@
       "additionalProperties": false,
       "description": "One \u00a76654(c)(2) installment, judged against payments made as of ``as_of``.",
       "properties": {
-        "quarter": {
-          "maximum": 4,
-          "minimum": 1,
-          "title": "Quarter",
-          "type": "integer"
-        },
         "due_date": {
           "description": "ISO date (statutory, un-shifted for weekends/holidays)",
           "title": "Due Date",
           "type": "string"
-        },
-        "required": {
-          "anyOf": [
-            {
-              "minimum": 0.0,
-              "type": "number"
-            },
-            {
-              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-              "type": "string"
-            }
-          ],
-          "title": "Required"
         },
         "paid": {
           "anyOf": [
@@ -224,6 +283,25 @@
             }
           ],
           "title": "Paid"
+        },
+        "quarter": {
+          "maximum": 4,
+          "minimum": 1,
+          "title": "Quarter",
+          "type": "integer"
+        },
+        "required": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Required"
         },
         "shortfall": {
           "anyOf": [
@@ -305,21 +383,82 @@
       ],
       "title": "SafeHarborSummary",
       "type": "object"
+    },
+    "WaExciseSection": {
+      "additionalProperties": false,
+      "description": "WA capital-gains excise applicability check (telos-ops#21) \u2014 emitted\nWITH the computation even when NOT applicable (checkers-cite-their-work:\nan unexamined exemption is indistinguishable from a silent omission).\nOptional/additive on ``TaxProjection`` (schema 1.1.0): present only when\nthe projection was run with a WA parameter pack.",
+      "properties": {
+        "applicable": {
+          "title": "Applicable",
+          "type": "boolean"
+        },
+        "citations": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "message": {
+          "description": "the determination, with its computation, in one line",
+          "title": "Message",
+          "type": "string"
+        },
+        "tax": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Tax"
+        },
+        "taxable_gain": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Taxable Gain"
+        },
+        "wa_allocable_long_term_gain": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "description": "the scenario's lt_net_gain, as passed to the WA excise check",
+          "title": "Wa Allocable Long Term Gain"
+        }
+      },
+      "required": [
+        "applicable",
+        "wa_allocable_long_term_gain",
+        "taxable_gain",
+        "tax",
+        "message"
+      ],
+      "title": "WaExciseSection",
+      "type": "object"
     }
   },
   "additionalProperties": false,
-  "description": "Year-round tax-projection artifact \u2014 produced by ``telos.planning``,\nconsumed by dashboards (Metron /tax Planning panel). Plain data only; the\nfull audit trail stays in-process (``ProjectionOutcome.federal``).",
+  "description": "Year-round tax-projection artifact \u2014 produced by ``telos.planning``,\nconsumed by dashboards (Metron /tax Planning panel). Plain data only; the\nfull audit trail stays in-process (``ProjectionOutcome.federal``).\n\nSchema 1.1.0 (telos-ops#21) added ``wa``/``ohio`` as OPTIONAL, additive\nsections \u2014 a MINOR bump, backward compatible: a 1.0.0-shaped consumer\nthat only reads the fields it already knows about is unaffected, and the\nMetron panel is expected to treat both new sections as optional.",
   "properties": {
-    "schema_version": {
-      "const": "1.0.0",
-      "default": "1.0.0",
-      "title": "Schema Version",
-      "type": "string"
-    },
-    "tax_year": {
-      "title": "Tax Year",
-      "type": "integer"
-    },
     "as_of": {
       "description": "ISO date the scenario reflects",
       "title": "As Of",
@@ -327,6 +466,20 @@
     },
     "filing_status": {
       "$ref": "#/$defs/FilingStatus"
+    },
+    "headline": {
+      "$ref": "#/$defs/PaymentHeadline"
+    },
+    "ohio": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OhioSection"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "pack_status": {
       "description": "parameter-pack status the projection ran on (example/provisional/final)",
@@ -336,9 +489,6 @@
     "projected": {
       "$ref": "#/$defs/ProjectedLiability"
     },
-    "safe_harbor": {
-      "$ref": "#/$defs/SafeHarborSummary"
-    },
     "quarters": {
       "default": [],
       "items": {
@@ -347,8 +497,29 @@
       "title": "Quarters",
       "type": "array"
     },
-    "headline": {
-      "$ref": "#/$defs/PaymentHeadline"
+    "safe_harbor": {
+      "$ref": "#/$defs/SafeHarborSummary"
+    },
+    "schema_version": {
+      "const": "1.1.0",
+      "default": "1.1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "tax_year": {
+      "title": "Tax Year",
+      "type": "integer"
+    },
+    "wa": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WaExciseSection"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     }
   },
   "required": [
