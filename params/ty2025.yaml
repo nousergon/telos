@@ -236,6 +236,9 @@ values:
     rate_28pct_breakpoint:
       value: 239100
       source: "Rev. Proc. 2024-40 §2.11 (§55(b)(1) 28% breakpoint, All Other Taxpayers; MFS is $119,550)"
+    exemption_phaseout_rate:
+      value: "0.25"
+      source: "IRC §55(d)(3)(A) (25% of the excess over the threshold, TY2025); 2025 Instructions for Form 6251, Exemption Worksheet line 5"
   estimated_tax:
     # Form 1040-ES / 2210 safe harbors (telos-ops#7). All statutory, NOT
     # inflation-adjusted — same figures apply every tax year until Congress

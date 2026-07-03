@@ -217,3 +217,97 @@ class EstimatedTaxRequest(BaseModel):
 def estimated_tax_request_json_schema() -> dict:
     """The contract artifact, generated — never hand-edited."""
     return EstimatedTaxRequest.model_json_schema()
+
+
+TAX_PROJECTION_SCHEMA_VERSION = "1.0.0"
+
+
+class QuarterPaymentStatus(StrEnum):
+    PAID = "paid"  # installment fully covered by payments made
+    OVERDUE = "overdue"  # due date has passed with a shortfall
+    UPCOMING = "upcoming"  # due date is at or after as_of, shortfall remains
+
+
+class QuarterFlag(BaseModel):
+    """One §6654(c)(2) installment, judged against payments made as of ``as_of``."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    quarter: int = Field(ge=1, le=4)
+    due_date: str = Field(description="ISO date (statutory, un-shifted for weekends/holidays)")
+    required: Decimal = Field(ge=0)
+    paid: Decimal = Field(ge=0)
+    shortfall: Decimal = Field(ge=0)
+    status: QuarterPaymentStatus
+
+
+class ProjectedLiability(BaseModel):
+    """The projected full-year federal picture, from the deterministic engine."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    agi: Decimal
+    taxable_income: Decimal = Field(ge=0)
+    total_tax: Decimal = Field(ge=0, description="Form 1040 line 24 (incl. NIIT/Add'l Medicare)")
+    total_withholding: Decimal = Field(ge=0, description="lines 25a-25c, treated as ratable")
+    estimated_payments_made: Decimal = Field(ge=0)
+    balance_due: Decimal = Field(description="total tax minus all payments; negative = refund")
+    effective_rate_on_agi: Decimal = Field(
+        ge=0, description="total_tax / AGI, 4dp; 0 when AGI <= 0"
+    )
+    marginal_ordinary_rate: Decimal = Field(
+        ge=0, description="ordinary bracket rate at projected taxable income"
+    )
+
+
+class SafeHarborSummary(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    basis: str = Field(
+        description="which §6654(d)(1) harbor bound: 90pct_current_year / "
+        "100pct_prior_year / 110pct_prior_year"
+    )
+    required_annual_payment: Decimal = Field(ge=0)
+    total_estimated_tax_due: Decimal = Field(
+        ge=0, description="required annual payment less withholding, floored at 0"
+    )
+
+
+class PaymentHeadline(BaseModel):
+    """The one-glance answer: should a payment be made, how much, by when."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    payment_recommended: bool
+    recommended_amount: Decimal = Field(
+        ge=0, description="overdue shortfalls + the next upcoming installment's shortfall"
+    )
+    next_due_date: Optional[str] = Field(  # noqa: UP045 — pydantic-friendly
+        default=None, description="ISO date of the next unpaid installment; None if all past"
+    )
+    message: str
+
+
+class TaxProjection(BaseModel):
+    """Year-round tax-projection artifact — produced by ``telos.planning``,
+    consumed by dashboards (Metron /tax Planning panel). Plain data only; the
+    full audit trail stays in-process (``ProjectionOutcome.federal``)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: Literal["1.0.0"] = TAX_PROJECTION_SCHEMA_VERSION
+    tax_year: int
+    as_of: str = Field(description="ISO date the scenario reflects")
+    filing_status: FilingStatus
+    pack_status: str = Field(
+        description="parameter-pack status the projection ran on (example/provisional/final)"
+    )
+    projected: ProjectedLiability
+    safe_harbor: SafeHarborSummary
+    quarters: tuple[QuarterFlag, ...] = ()
+    headline: PaymentHeadline
+
+
+def tax_projection_json_schema() -> dict:
+    """The contract artifact, generated — never hand-edited."""
+    return TaxProjection.model_json_schema()
