@@ -1,0 +1,275 @@
+# TY2026 federal parameter pack — PROVISIONAL.
+#
+# Every value transcribed from the cited primary document on 2026-07-03 —
+# never from memory. Sources: Rev. Proc. 2025-32 (2026 inflation adjustments
+# under the Code as amended by Pub. L. 119-21 (OBBBA), fetched from
+# irs.gov/pub/irs-drop/rp-25-32.pdf) and IRC §164(b)(6)/§55(d)(4) as amended
+# by OBBBA (statutory schedules, fetched from law.cornell.edu).
+#
+# Status is `provisional` — the VALUES are primary-sourced, but the final
+# 2026 form instructions (which telos-ops#13 tracks, landing ~Nov 2026 –
+# Jan 2027) have not been published, so form-level citations and any
+# late-2026 legislative changes cannot be confirmed yet. #13 flips this pack
+# to `final` against the final forms. Built 2026-07-03 for the year-round
+# tax-planning arc (projection + 1040-ES flagging), which needs current-year
+# constants DURING the year, not at filing time.
+tax_year: 2026
+status: provisional
+values:
+  standard_deduction:
+    single:
+      value: 16100
+      source: "Rev. Proc. 2025-32 §4.14(1) (§63(c)(2), Unmarried Individuals): $16,100"
+    married_filing_jointly:
+      value: 32200
+      source: "Rev. Proc. 2025-32 §4.14(1) (§63(c)(2), MFJ and Surviving Spouses): $32,200"
+    married_filing_separately:
+      value: 16100
+      source: "Rev. Proc. 2025-32 §4.14(1) (§63(c)(2), MFS): $16,100"
+    head_of_household:
+      value: 24150
+      source: "Rev. Proc. 2025-32 §4.14(1) (§63(c)(2), Heads of Households): $24,150"
+    qualifying_surviving_spouse:
+      value: 32200
+      source: "Rev. Proc. 2025-32 §4.14(1) (§63(c)(2), MFJ and Surviving Spouses): $32,200"
+  ordinary_brackets:
+    single:
+      - {upto: 12400, rate: "0.10", source: "Rev. Proc. 2025-32 §4.01 Table 3 (Unmarried Individuals)"}
+      - {upto: 50400, rate: "0.12", source: "Rev. Proc. 2025-32 §4.01 Table 3"}
+      - {upto: 105700, rate: "0.22", source: "Rev. Proc. 2025-32 §4.01 Table 3"}
+      - {upto: 201775, rate: "0.24", source: "Rev. Proc. 2025-32 §4.01 Table 3"}
+      - {upto: 256225, rate: "0.32", source: "Rev. Proc. 2025-32 §4.01 Table 3"}
+      - {upto: 640600, rate: "0.35", source: "Rev. Proc. 2025-32 §4.01 Table 3"}
+      - {upto: null, rate: "0.37", source: "Rev. Proc. 2025-32 §4.01 Table 3"}
+    married_filing_jointly:
+      - {upto: 24800, rate: "0.10", source: "Rev. Proc. 2025-32 §4.01 Table 1 (MFJ and Surviving Spouses)"}
+      - {upto: 100800, rate: "0.12", source: "Rev. Proc. 2025-32 §4.01 Table 1"}
+      - {upto: 211400, rate: "0.22", source: "Rev. Proc. 2025-32 §4.01 Table 1"}
+      - {upto: 403550, rate: "0.24", source: "Rev. Proc. 2025-32 §4.01 Table 1"}
+      - {upto: 512450, rate: "0.32", source: "Rev. Proc. 2025-32 §4.01 Table 1"}
+      - {upto: 768700, rate: "0.35", source: "Rev. Proc. 2025-32 §4.01 Table 1"}
+      - {upto: null, rate: "0.37", source: "Rev. Proc. 2025-32 §4.01 Table 1"}
+    qualifying_surviving_spouse:
+      - {upto: 24800, rate: "0.10", source: "Rev. Proc. 2025-32 §4.01 Table 1 (MFJ and Surviving Spouses)"}
+      - {upto: 100800, rate: "0.12", source: "Rev. Proc. 2025-32 §4.01 Table 1"}
+      - {upto: 211400, rate: "0.22", source: "Rev. Proc. 2025-32 §4.01 Table 1"}
+      - {upto: 403550, rate: "0.24", source: "Rev. Proc. 2025-32 §4.01 Table 1"}
+      - {upto: 512450, rate: "0.32", source: "Rev. Proc. 2025-32 §4.01 Table 1"}
+      - {upto: 768700, rate: "0.35", source: "Rev. Proc. 2025-32 §4.01 Table 1"}
+      - {upto: null, rate: "0.37", source: "Rev. Proc. 2025-32 §4.01 Table 1"}
+    head_of_household:
+      - {upto: 17700, rate: "0.10", source: "Rev. Proc. 2025-32 §4.01 Table 2 (Heads of Households)"}
+      - {upto: 67450, rate: "0.12", source: "Rev. Proc. 2025-32 §4.01 Table 2"}
+      - {upto: 105700, rate: "0.22", source: "Rev. Proc. 2025-32 §4.01 Table 2"}
+      - {upto: 201750, rate: "0.24", source: "Rev. Proc. 2025-32 §4.01 Table 2"}
+      - {upto: 256200, rate: "0.32", source: "Rev. Proc. 2025-32 §4.01 Table 2"}
+      - {upto: 640600, rate: "0.35", source: "Rev. Proc. 2025-32 §4.01 Table 2"}
+      - {upto: null, rate: "0.37", source: "Rev. Proc. 2025-32 §4.01 Table 2"}
+    married_filing_separately:
+      - {upto: 12400, rate: "0.10", source: "Rev. Proc. 2025-32 §4.01 Table 4 (MFS)"}
+      - {upto: 50400, rate: "0.12", source: "Rev. Proc. 2025-32 §4.01 Table 4"}
+      - {upto: 105700, rate: "0.22", source: "Rev. Proc. 2025-32 §4.01 Table 4"}
+      - {upto: 201775, rate: "0.24", source: "Rev. Proc. 2025-32 §4.01 Table 4"}
+      - {upto: 256225, rate: "0.32", source: "Rev. Proc. 2025-32 §4.01 Table 4"}
+      - {upto: 384350, rate: "0.35", source: "Rev. Proc. 2025-32 §4.01 Table 4"}
+      - {upto: null, rate: "0.37", source: "Rev. Proc. 2025-32 §4.01 Table 4"}
+  ltcg:
+    zero_rate_max:
+      single:
+        value: 49450
+        source: "Rev. Proc. 2025-32 §4.03 (Maximum Zero Rate Amount, All Other Individuals): $49,450"
+      married_filing_jointly:
+        value: 98900
+        source: "Rev. Proc. 2025-32 §4.03 (MFJ and Surviving Spouse): $98,900"
+      married_filing_separately:
+        value: 49450
+        source: "Rev. Proc. 2025-32 §4.03 (MFS): $49,450"
+      head_of_household:
+        value: 66200
+        source: "Rev. Proc. 2025-32 §4.03 (Heads of Household): $66,200"
+      qualifying_surviving_spouse:
+        value: 98900
+        source: "Rev. Proc. 2025-32 §4.03 (MFJ and Surviving Spouse): $98,900"
+    fifteen_rate_max:
+      single:
+        value: 545500
+        source: "Rev. Proc. 2025-32 §4.03 (Maximum 15% Rate Amount, All Other Individuals): $545,500"
+      married_filing_jointly:
+        value: 613700
+        source: "Rev. Proc. 2025-32 §4.03 (MFJ and Surviving Spouse): $613,700"
+      married_filing_separately:
+        value: 306850
+        source: "Rev. Proc. 2025-32 §4.03 (MFS): $306,850"
+      head_of_household:
+        value: 579600
+        source: "Rev. Proc. 2025-32 §4.03 (Heads of Household): $579,600"
+      qualifying_surviving_spouse:
+        value: 613700
+        source: "Rev. Proc. 2025-32 §4.03 (MFJ and Surviving Spouse): $613,700"
+  niit:
+    rate:
+      value: "0.038"
+      source: "IRC §1411(a)(1) (statutory 3.8%, not inflation-adjusted; 2026 Form 8960 instructions not yet published — confirm at telos-ops#13 final-forms pass)"
+    magi_threshold:
+      single:
+        value: 200000
+        source: "IRC §1411(b)(3) (statutory, not inflation-adjusted)"
+      married_filing_jointly:
+        value: 250000
+        source: "IRC §1411(b)(1) (statutory, not inflation-adjusted)"
+      married_filing_separately:
+        value: 125000
+        source: "IRC §1411(b)(2) (statutory, not inflation-adjusted)"
+      head_of_household:
+        value: 200000
+        source: "IRC §1411(b)(3) (statutory, not inflation-adjusted)"
+      qualifying_surviving_spouse:
+        value: 250000
+        source: "IRC §1411(b)(1) (surviving spouse treated as joint threshold; statutory)"
+  additional_medicare:
+    rate:
+      value: "0.009"
+      source: "IRC §3101(b)(2) (statutory 0.9%, not inflation-adjusted; 2026 Form 8959 instructions not yet published — confirm at telos-ops#13 final-forms pass)"
+    threshold:
+      single:
+        value: 200000
+        source: "IRC §3101(b)(2)(C) (statutory, not inflation-adjusted)"
+      married_filing_jointly:
+        value: 250000
+        source: "IRC §3101(b)(2)(A) (statutory, not inflation-adjusted)"
+      married_filing_separately:
+        value: 125000
+        source: "IRC §3101(b)(2)(B) (statutory, not inflation-adjusted)"
+      head_of_household:
+        value: 200000
+        source: "IRC §3101(b)(2)(C) (statutory, not inflation-adjusted)"
+      qualifying_surviving_spouse:
+        value: 250000
+        source: "IRC §3101(b)(2)(A) (statutory, not inflation-adjusted)"
+  salt:
+    # OBBBA §70120 wrote a per-year statutory schedule into IRC §164(b)(6);
+    # 2026 values are fixed dollar amounts in the statute itself (fetched
+    # from the amended §164 text), not Rev. Proc. inflation adjustments.
+    cap:
+      value: 40400
+      source: "IRC §164(b)(6) as amended by Pub. L. 119-21 (OBBBA) §70120: 'in the case of any taxable year beginning in calendar year 2026, $40,400'"
+    cap_married_filing_separately:
+      value: 20200
+      source: "IRC §164(b)(6) as amended by Pub. L. 119-21 (OBBBA) §70120 (half the applicable limitation amount for MFS): $20,200"
+    magi_phase_down_threshold:
+      value: 505000
+      source: "IRC §164(b)(6) as amended by Pub. L. 119-21 (OBBBA) §70120: 'in the case of any taxable year beginning in calendar year 2026, $505,000'"
+    magi_phase_down_threshold_mfs:
+      value: 252500
+      source: "IRC §164(b)(6) as amended by Pub. L. 119-21 (OBBBA) §70120 (half the threshold amount for MFS): $252,500"
+    phase_down_rate:
+      value: "0.30"
+      source: "IRC §164(b)(6) as amended by Pub. L. 119-21 (OBBBA) §70120 (reduced by 30% of the excess of MAGI over the threshold)"
+    floor:
+      value: 10000
+      source: "IRC §164(b)(6) as amended by Pub. L. 119-21 (OBBBA) §70120 (reduction shall not result in a limitation below $10,000)"
+    floor_married_filing_separately:
+      value: 5000
+      source: "IRC §164(b)(6) as amended by Pub. L. 119-21 (OBBBA) §70120 (half the floor for MFS): $5,000"
+  qbi:
+    threshold:
+      single:
+        value: 201750
+        source: "Rev. Proc. 2025-32 §4.26 (§199A(e)(2) threshold, All Other Returns): $201,750"
+      married_filing_jointly:
+        value: 403500
+        source: "Rev. Proc. 2025-32 §4.26 (MFJ): $403,500"
+      married_filing_separately:
+        value: 201775
+        source: "Rev. Proc. 2025-32 §4.26 (MFS): $201,775"
+      head_of_household:
+        value: 201750
+        source: "Rev. Proc. 2025-32 §4.26 (All Other Returns): $201,750"
+      qualifying_surviving_spouse:
+        value: 403500
+        source: "Rev. Proc. 2025-32 §4.26 (MFJ; surviving spouse files joint-equivalent): $403,500"
+    phase_in_range_top:
+      single:
+        value: 276750
+        source: "Rev. Proc. 2025-32 §4.26 (phase-in range amount, All Other Returns): $276,750"
+      married_filing_jointly:
+        value: 553500
+        source: "Rev. Proc. 2025-32 §4.26 (MFJ): $553,500"
+      married_filing_separately:
+        value: 276775
+        source: "Rev. Proc. 2025-32 §4.26 (MFS): $276,775"
+      head_of_household:
+        value: 276750
+        source: "Rev. Proc. 2025-32 §4.26 (All Other Returns): $276,750"
+      qualifying_surviving_spouse:
+        value: 553500
+        source: "Rev. Proc. 2025-32 §4.26 (MFJ): $553,500"
+  amt:
+    # For the Form 6251 trigger guard (telos-ops#12); NOT a full AMT engine.
+    exemption:
+      single:
+        value: 90100
+        source: "Rev. Proc. 2025-32 §4.10 (§55(d)(1), Unmarried Individuals other than Surviving Spouses): $90,100"
+      married_filing_jointly:
+        value: 140200
+        source: "Rev. Proc. 2025-32 §4.10 (Joint Returns or Surviving Spouses): $140,200"
+      married_filing_separately:
+        value: 70100
+        source: "Rev. Proc. 2025-32 §4.10 (MFS): $70,100"
+      head_of_household:
+        value: 90100
+        source: "Rev. Proc. 2025-32 §4.10 (Unmarried Individuals other than Surviving Spouses): $90,100"
+      qualifying_surviving_spouse:
+        value: 140200
+        source: "Rev. Proc. 2025-32 §4.10 (Joint Returns or Surviving Spouses): $140,200"
+    exemption_phaseout_threshold:
+      single:
+        value: 500000
+        source: "Rev. Proc. 2025-32 §4.10 (§55(d)(2) threshold phaseout, Unmarried Individuals other than Surviving Spouses): $500,000"
+      married_filing_jointly:
+        value: 1000000
+        source: "Rev. Proc. 2025-32 §4.10 (Joint Returns or Surviving Spouses; §55(d)(4)(B) fixes $1,000,000 unindexed before 2027): $1,000,000"
+      married_filing_separately:
+        value: 500000
+        source: "Rev. Proc. 2025-32 §4.10 (MFS): $500,000"
+      head_of_household:
+        value: 500000
+        source: "Rev. Proc. 2025-32 §4.10 (Unmarried Individuals other than Surviving Spouses): $500,000"
+      qualifying_surviving_spouse:
+        value: 1000000
+        source: "Rev. Proc. 2025-32 §4.10 (Joint Returns or Surviving Spouses): $1,000,000"
+    exemption_phaseout_rate:
+      value: "0.50"
+      source: "IRC §55(d)(4)(B)(ii) as amended by Pub. L. 119-21 (OBBBA) §70107 (50% substituted for 25% for taxable years beginning after 2025); corroborated by Rev. Proc. 2025-32 §4.10 complete-phaseout amounts (e.g. $1,280,400 = $1,000,000 + $140,200/0.50 for joint returns)"
+    rate_28pct_breakpoint:
+      value: 244500
+      source: "Rev. Proc. 2025-32 §4.10 (§55(b)(1) 28% breakpoint, All Other Taxpayers; MFS is $122,250): $244,500"
+  estimated_tax:
+    # Form 1040-ES / 2210 safe harbors (telos-ops#7). All statutory, NOT
+    # inflation-adjusted — same figures apply every tax year until Congress
+    # amends §6654.
+    safe_harbor_current_year_pct:
+      value: "0.90"
+      source: "IRC §6654(d)(1)(B)(i) (statutory; 2026 Form 2210 instructions not yet published — confirm at telos-ops#13 final-forms pass)"
+    safe_harbor_standard_prior_year_pct:
+      value: "1.00"
+      source: "IRC §6654(d)(1)(B)(ii) (statutory)"
+    safe_harbor_higher_income_prior_year_pct:
+      value: "1.10"
+      source: "IRC §6654(d)(1)(C)(i) (statutory)"
+    higher_income_agi_threshold:
+      single:
+        value: 150000
+        source: "IRC §6654(d)(1)(C)(i) (statutory)"
+      married_filing_jointly:
+        value: 150000
+        source: "IRC §6654(d)(1)(C)(i) (statutory)"
+      married_filing_separately:
+        value: 75000
+        source: "IRC §6654(d)(1)(C)(i) (MFS threshold is half; statutory)"
+      head_of_household:
+        value: 150000
+        source: "IRC §6654(d)(1)(C)(i) (statutory)"
+      qualifying_surviving_spouse:
+        value: 150000
+        source: "IRC §6654(d)(1)(C)(i) (statutory)"

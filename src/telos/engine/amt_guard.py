@@ -17,9 +17,10 @@ Two layers:
 2. **Arithmetic screen** — for the simple profile (wages/investment/rental
    income, SALT-or-standard-deduction addback as the only preference):
    AMTI ~= taxable income + deduction addback (Form 6251 line 2a semantics);
-   exemption per the Exemption Worksheet (25% phaseout above the threshold,
-   zero at complete phaseout — pack values verified against the printed
-   worksheet); 26%/28% on the ordinary AMT base with preferential income
+   exemption per the Exemption Worksheet (phaseout above the threshold at the
+   pack's ``amt.exemption_phaseout_rate`` — 25% through TY2025, 50% for
+   TY2026+ per IRC §55(d)(4)(B)(ii) as amended by OBBBA §70107 — zero at
+   complete phaseout); 26%/28% on the ordinary AMT base with preferential income
    taxed at 15%/20% (a screen-level approximation of Part III that IGNORES
    the 0% bracket, overstating TMT — the safe direction). The screen flags
    when TMT reaches 98% of regular tax: a 2% conservatism margin against the
@@ -40,7 +41,6 @@ from telos.params import ParamPack
 
 INSTR_CITE = "2025 Instructions for Form 6251"
 _ZERO = Decimal(0)
-_PHASEOUT_RATE = Decimal("0.25")  # Exemption Worksheet line 5 (verified in print)
 _RATE_26 = Decimal("0.26")
 _RATE_28 = Decimal("0.28")
 _RATE_15 = Decimal("0.15")
@@ -118,6 +118,9 @@ def amt_screen(inputs: AmtGuardInputs, pack: ParamPack) -> AmtScreenResult:
     fs = inputs.filing_status.value
     exemption_full = pack.get(f"amt.exemption.{fs}")
     threshold = pack.get(f"amt.exemption_phaseout_threshold.{fs}")
+    # A tax-year constant, NOT code: 25% through TY2025, 50% for TY2026+
+    # (IRC §55(d)(4)(B)(ii) as amended by OBBBA §70107).
+    phaseout_rate = pack.get("amt.exemption_phaseout_rate")
     breakpoint_28 = pack.get("amt.rate_28pct_breakpoint")
     if inputs.filing_status is FilingStatus.MARRIED_FILING_SEPARATELY:
         # §2.11: the 28% breakpoint is halved for MFS ($119,550) — the pack
@@ -127,7 +130,7 @@ def amt_screen(inputs: AmtGuardInputs, pack: ParamPack) -> AmtScreenResult:
         )
 
     amti = inputs.taxable_income + inputs.deduction_addback
-    phaseout = max(amti - threshold.value, _ZERO) * _PHASEOUT_RATE
+    phaseout = max(amti - threshold.value, _ZERO) * phaseout_rate.value
     exemption = max(exemption_full.value - phaseout, _ZERO)
     base = max(amti - exemption, _ZERO)
 
@@ -154,10 +157,10 @@ def amt_screen(inputs: AmtGuardInputs, pack: ParamPack) -> AmtScreenResult:
         label="amt_guard:passed",
         value=tmt,
         sources=(
-            f"{INSTR_CITE} (Who Must File; Exemption Worksheet 25% phaseout); "
+            f"{INSTR_CITE} (Who Must File; Exemption Worksheet phaseout); "
             f"screen TMT vs regular tax {inputs.regular_tax} with 2% margin",
         ),
-        inputs=(exemption_full, threshold, breakpoint_28),
+        inputs=(exemption_full, threshold, phaseout_rate, breakpoint_28),
     )
     return AmtScreenResult(
         amti=amti,

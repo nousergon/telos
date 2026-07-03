@@ -1,0 +1,365 @@
+{
+  "$defs": {
+    "FilingStatus": {
+      "enum": [
+        "single",
+        "married_filing_jointly",
+        "married_filing_separately",
+        "head_of_household",
+        "qualifying_surviving_spouse"
+      ],
+      "title": "FilingStatus",
+      "type": "string"
+    },
+    "PaymentHeadline": {
+      "additionalProperties": false,
+      "description": "The one-glance answer: should a payment be made, how much, by when.",
+      "properties": {
+        "payment_recommended": {
+          "title": "Payment Recommended",
+          "type": "boolean"
+        },
+        "recommended_amount": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "description": "overdue shortfalls + the next upcoming installment's shortfall",
+          "title": "Recommended Amount"
+        },
+        "next_due_date": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "ISO date of the next unpaid installment; None if all past",
+          "title": "Next Due Date"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "payment_recommended",
+        "recommended_amount",
+        "message"
+      ],
+      "title": "PaymentHeadline",
+      "type": "object"
+    },
+    "ProjectedLiability": {
+      "additionalProperties": false,
+      "description": "The projected full-year federal picture, from the deterministic engine.",
+      "properties": {
+        "agi": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Agi"
+        },
+        "taxable_income": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Taxable Income"
+        },
+        "total_tax": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "description": "Form 1040 line 24 (incl. NIIT/Add'l Medicare)",
+          "title": "Total Tax"
+        },
+        "total_withholding": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "description": "lines 25a-25c, treated as ratable",
+          "title": "Total Withholding"
+        },
+        "estimated_payments_made": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Estimated Payments Made"
+        },
+        "balance_due": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "description": "total tax minus all payments; negative = refund",
+          "title": "Balance Due"
+        },
+        "effective_rate_on_agi": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "description": "total_tax / AGI, 4dp; 0 when AGI <= 0",
+          "title": "Effective Rate On Agi"
+        },
+        "marginal_ordinary_rate": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "description": "ordinary bracket rate at projected taxable income",
+          "title": "Marginal Ordinary Rate"
+        }
+      },
+      "required": [
+        "agi",
+        "taxable_income",
+        "total_tax",
+        "total_withholding",
+        "estimated_payments_made",
+        "balance_due",
+        "effective_rate_on_agi",
+        "marginal_ordinary_rate"
+      ],
+      "title": "ProjectedLiability",
+      "type": "object"
+    },
+    "QuarterFlag": {
+      "additionalProperties": false,
+      "description": "One \u00a76654(c)(2) installment, judged against payments made as of ``as_of``.",
+      "properties": {
+        "quarter": {
+          "maximum": 4,
+          "minimum": 1,
+          "title": "Quarter",
+          "type": "integer"
+        },
+        "due_date": {
+          "description": "ISO date (statutory, un-shifted for weekends/holidays)",
+          "title": "Due Date",
+          "type": "string"
+        },
+        "required": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Required"
+        },
+        "paid": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Paid"
+        },
+        "shortfall": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Shortfall"
+        },
+        "status": {
+          "$ref": "#/$defs/QuarterPaymentStatus"
+        }
+      },
+      "required": [
+        "quarter",
+        "due_date",
+        "required",
+        "paid",
+        "shortfall",
+        "status"
+      ],
+      "title": "QuarterFlag",
+      "type": "object"
+    },
+    "QuarterPaymentStatus": {
+      "enum": [
+        "paid",
+        "overdue",
+        "upcoming"
+      ],
+      "title": "QuarterPaymentStatus",
+      "type": "string"
+    },
+    "SafeHarborSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "basis": {
+          "description": "which \u00a76654(d)(1) harbor bound: 90pct_current_year / 100pct_prior_year / 110pct_prior_year",
+          "title": "Basis",
+          "type": "string"
+        },
+        "required_annual_payment": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Required Annual Payment"
+        },
+        "total_estimated_tax_due": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "description": "required annual payment less withholding, floored at 0",
+          "title": "Total Estimated Tax Due"
+        }
+      },
+      "required": [
+        "basis",
+        "required_annual_payment",
+        "total_estimated_tax_due"
+      ],
+      "title": "SafeHarborSummary",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Year-round tax-projection artifact \u2014 produced by ``telos.planning``,\nconsumed by dashboards (Metron /tax Planning panel). Plain data only; the\nfull audit trail stays in-process (``ProjectionOutcome.federal``).",
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "tax_year": {
+      "title": "Tax Year",
+      "type": "integer"
+    },
+    "as_of": {
+      "description": "ISO date the scenario reflects",
+      "title": "As Of",
+      "type": "string"
+    },
+    "filing_status": {
+      "$ref": "#/$defs/FilingStatus"
+    },
+    "pack_status": {
+      "description": "parameter-pack status the projection ran on (example/provisional/final)",
+      "title": "Pack Status",
+      "type": "string"
+    },
+    "projected": {
+      "$ref": "#/$defs/ProjectedLiability"
+    },
+    "safe_harbor": {
+      "$ref": "#/$defs/SafeHarborSummary"
+    },
+    "quarters": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/QuarterFlag"
+      },
+      "title": "Quarters",
+      "type": "array"
+    },
+    "headline": {
+      "$ref": "#/$defs/PaymentHeadline"
+    }
+  },
+  "required": [
+    "tax_year",
+    "as_of",
+    "filing_status",
+    "pack_status",
+    "projected",
+    "safe_harbor",
+    "headline"
+  ],
+  "title": "TaxProjection",
+  "type": "object"
+}

@@ -164,9 +164,11 @@ class TestSpotChecksAgainstCitedDocuments:
 
     def test_amt_exemption_single(self, pack):
         """Rev. Proc. 2024-40 §2.11: exemption $88,100 (Unmarried
-        Individuals); phaseout threshold $626,350."""
+        Individuals); phaseout threshold $626,350; 25% phaseout rate
+        (IRC §55(d)(3)(A) — OBBBA raises it to 50% only for TY2026+)."""
         assert pack.get("amt.exemption.single").value == D(88_100)
         assert pack.get("amt.exemption_phaseout_threshold.single").value == D(626_350)
+        assert pack.get("amt.exemption_phaseout_rate").value == D("0.25")
 
     def test_every_source_cites_a_named_document(self, pack):
         """No bare or placeholder citations anywhere in the pack."""
