@@ -1,0 +1,273 @@
+# TY2024 federal parameter pack.
+#
+# Every value transcribed from the cited primary document on 2026-07-03 —
+# never from memory. Sources: Rev. Proc. 2023-34 (2024 inflation adjustments,
+# fetched from irs.gov/pub/irs-drop/rp-23-34.pdf) and the final 2024 Form
+# 1040 instructions (fetched from irs.gov/pub/irs-prior/i1040gi--2024.pdf)
+# where a form-level citation is more precise. TY2024 predates OBBBA (Pub. L.
+# 119-21, enacted 2025-07-04), so the pre-OBBBA Code applies throughout: the
+# standard deduction is Rev. Proc.'s $14,600 single (NOT the 2025 $15,750),
+# the SALT cap is the flat $10,000 §164(b)(6) limit (which BINDS on any
+# itemizer with >$10k of state+local tax — a branch the 2025 $40,000 cap
+# rarely exercises), and the AMT exemption phases out at the statutory 25%
+# rate (§55(d)(3)(A), pre-OBBBA-§70107).
+#
+# Status is `final`: the VALUES and the form-level structure are both from
+# published final 2024 documents. The end-to-end replay gate (reproducing the
+# filed TY2024 return to the dollar) is a SEPARATE, local-only verification
+# (`pytest -m personal`, telos-ops#18) that needs Brian's filed-2024 fixture,
+# which lives outside the repo and never enters CI; this pack's own
+# transcription cross-check (test_ty2024_pack.py) runs in CI.
+tax_year: 2024
+status: final
+values:
+  standard_deduction:
+    # Pre-OBBBA §63(c)(2) inflation-adjusted amounts (OBBBA §70102's
+    # $15,750/$31,500 first apply for TY2025).
+    single:
+      value: 14600
+      source: "Rev. Proc. 2023-34 §3.15(1) (§63(c)(2), Unmarried Individuals other than Surviving Spouses and Heads of Households): $14,600"
+    married_filing_jointly:
+      value: 29200
+      source: "Rev. Proc. 2023-34 §3.15(1) (§63(c)(2), Married Individuals Filing Joint Returns and Surviving Spouses): $29,200"
+    married_filing_separately:
+      value: 14600
+      source: "Rev. Proc. 2023-34 §3.15(1) (§63(c)(2), Married Individuals Filing Separate Returns): $14,600"
+    head_of_household:
+      value: 21900
+      source: "Rev. Proc. 2023-34 §3.15(1) (§63(c)(2), Heads of Households): $21,900"
+    qualifying_surviving_spouse:
+      value: 29200
+      source: "Rev. Proc. 2023-34 §3.15(1) (§63(c)(2), Surviving Spouses filed with Joint Returns): $29,200"
+  ordinary_brackets:
+    single:
+      - {upto: 11600, rate: "0.10", source: "Rev. Proc. 2023-34 §3.01 Table 3 (Unmarried Individuals)"}
+      - {upto: 47150, rate: "0.12", source: "Rev. Proc. 2023-34 §3.01 Table 3"}
+      - {upto: 100525, rate: "0.22", source: "Rev. Proc. 2023-34 §3.01 Table 3"}
+      - {upto: 191950, rate: "0.24", source: "Rev. Proc. 2023-34 §3.01 Table 3"}
+      - {upto: 243725, rate: "0.32", source: "Rev. Proc. 2023-34 §3.01 Table 3"}
+      - {upto: 609350, rate: "0.35", source: "Rev. Proc. 2023-34 §3.01 Table 3"}
+      - {upto: null, rate: "0.37", source: "Rev. Proc. 2023-34 §3.01 Table 3"}
+    married_filing_jointly:
+      - {upto: 23200, rate: "0.10", source: "Rev. Proc. 2023-34 §3.01 Table 1 (MFJ and Surviving Spouses)"}
+      - {upto: 94300, rate: "0.12", source: "Rev. Proc. 2023-34 §3.01 Table 1"}
+      - {upto: 201050, rate: "0.22", source: "Rev. Proc. 2023-34 §3.01 Table 1"}
+      - {upto: 383900, rate: "0.24", source: "Rev. Proc. 2023-34 §3.01 Table 1"}
+      - {upto: 487450, rate: "0.32", source: "Rev. Proc. 2023-34 §3.01 Table 1"}
+      - {upto: 731200, rate: "0.35", source: "Rev. Proc. 2023-34 §3.01 Table 1"}
+      - {upto: null, rate: "0.37", source: "Rev. Proc. 2023-34 §3.01 Table 1"}
+    qualifying_surviving_spouse:
+      - {upto: 23200, rate: "0.10", source: "Rev. Proc. 2023-34 §3.01 Table 1 (MFJ and Surviving Spouses)"}
+      - {upto: 94300, rate: "0.12", source: "Rev. Proc. 2023-34 §3.01 Table 1"}
+      - {upto: 201050, rate: "0.22", source: "Rev. Proc. 2023-34 §3.01 Table 1"}
+      - {upto: 383900, rate: "0.24", source: "Rev. Proc. 2023-34 §3.01 Table 1"}
+      - {upto: 487450, rate: "0.32", source: "Rev. Proc. 2023-34 §3.01 Table 1"}
+      - {upto: 731200, rate: "0.35", source: "Rev. Proc. 2023-34 §3.01 Table 1"}
+      - {upto: null, rate: "0.37", source: "Rev. Proc. 2023-34 §3.01 Table 1"}
+    head_of_household:
+      - {upto: 16550, rate: "0.10", source: "Rev. Proc. 2023-34 §3.01 Table 2 (Heads of Households)"}
+      - {upto: 63100, rate: "0.12", source: "Rev. Proc. 2023-34 §3.01 Table 2"}
+      - {upto: 100500, rate: "0.22", source: "Rev. Proc. 2023-34 §3.01 Table 2"}
+      - {upto: 191950, rate: "0.24", source: "Rev. Proc. 2023-34 §3.01 Table 2"}
+      - {upto: 243700, rate: "0.32", source: "Rev. Proc. 2023-34 §3.01 Table 2"}
+      - {upto: 609350, rate: "0.35", source: "Rev. Proc. 2023-34 §3.01 Table 2"}
+      - {upto: null, rate: "0.37", source: "Rev. Proc. 2023-34 §3.01 Table 2"}
+    married_filing_separately:
+      - {upto: 11600, rate: "0.10", source: "Rev. Proc. 2023-34 §3.01 Table 4 (MFS)"}
+      - {upto: 47150, rate: "0.12", source: "Rev. Proc. 2023-34 §3.01 Table 4"}
+      - {upto: 100525, rate: "0.22", source: "Rev. Proc. 2023-34 §3.01 Table 4"}
+      - {upto: 191950, rate: "0.24", source: "Rev. Proc. 2023-34 §3.01 Table 4"}
+      - {upto: 243725, rate: "0.32", source: "Rev. Proc. 2023-34 §3.01 Table 4"}
+      - {upto: 365600, rate: "0.35", source: "Rev. Proc. 2023-34 §3.01 Table 4"}
+      - {upto: null, rate: "0.37", source: "Rev. Proc. 2023-34 §3.01 Table 4"}
+  ltcg:
+    # Rev. Proc. 2023-34 §3.03 (§1(h)/§1(j)(5)) maximum zero rate / maximum
+    # 15% rate amounts. These are also printed verbatim on the 2024 QDCGT
+    # worksheet, lines 6 and 13 (2024 Form 1040 instructions).
+    zero_rate_max:
+      single:
+        value: 47025
+        source: "Rev. Proc. 2023-34 §3.03 (Maximum Zero Rate Amount, All Other Individuals): $47,025"
+      married_filing_jointly:
+        value: 94050
+        source: "Rev. Proc. 2023-34 §3.03 (MFJ and Surviving Spouse): $94,050"
+      married_filing_separately:
+        value: 47025
+        source: "Rev. Proc. 2023-34 §3.03 (MFS): $47,025"
+      head_of_household:
+        value: 63000
+        source: "Rev. Proc. 2023-34 §3.03 (Heads of Household): $63,000"
+      qualifying_surviving_spouse:
+        value: 94050
+        source: "Rev. Proc. 2023-34 §3.03 (MFJ and Surviving Spouse): $94,050"
+    fifteen_rate_max:
+      single:
+        value: 518900
+        source: "Rev. Proc. 2023-34 §3.03 (Maximum 15% Rate Amount, All Other Individuals): $518,900"
+      married_filing_jointly:
+        value: 583750
+        source: "Rev. Proc. 2023-34 §3.03 (MFJ and Surviving Spouse): $583,750"
+      married_filing_separately:
+        value: 291850
+        source: "Rev. Proc. 2023-34 §3.03 (MFS): $291,850"
+      head_of_household:
+        value: 551350
+        source: "Rev. Proc. 2023-34 §3.03 (Heads of Household): $551,350"
+      qualifying_surviving_spouse:
+        value: 583750
+        source: "Rev. Proc. 2023-34 §3.03 (MFJ and Surviving Spouse): $583,750"
+  niit:
+    rate:
+      value: "0.038"
+      source: "IRC §1411(a)(1) (statutory 3.8%, not inflation-adjusted); 2024 Form 8960 instructions"
+    magi_threshold:
+      single:
+        value: 200000
+        source: "IRC §1411(b)(3) (statutory, not inflation-adjusted); 2024 Form 8960 instructions"
+      married_filing_jointly:
+        value: 250000
+        source: "IRC §1411(b)(1); 2024 Form 8960 instructions"
+      married_filing_separately:
+        value: 125000
+        source: "IRC §1411(b)(2); 2024 Form 8960 instructions"
+      head_of_household:
+        value: 200000
+        source: "IRC §1411(b)(3); 2024 Form 8960 instructions"
+      qualifying_surviving_spouse:
+        value: 250000
+        source: "IRC §1411(b)(1) (surviving spouse treated as joint threshold); 2024 Form 8960 instructions"
+  additional_medicare:
+    rate:
+      value: "0.009"
+      source: "IRC §3101(b)(2) (statutory 0.9%, not inflation-adjusted); 2024 Form 8959 instructions"
+    threshold:
+      single:
+        value: 200000
+        source: "IRC §3101(b)(2)(C); 2024 Form 8959 instructions"
+      married_filing_jointly:
+        value: 250000
+        source: "IRC §3101(b)(2)(A); 2024 Form 8959 instructions"
+      married_filing_separately:
+        value: 125000
+        source: "IRC §3101(b)(2)(B); 2024 Form 8959 instructions"
+      head_of_household:
+        value: 200000
+        source: "IRC §3101(b)(2)(C); 2024 Form 8959 instructions"
+      qualifying_surviving_spouse:
+        value: 250000
+        source: "IRC §3101(b)(2)(A); 2024 Form 8959 instructions"
+  salt:
+    # TY2024 predates OBBBA §70120: IRC §164(b)(6) imposed a FLAT $10,000
+    # ($5,000 MFS) cap with NO MAGI phase-down. The 2025 pack's phase-down
+    # keys (magi_phase_down_threshold, phase_down_rate, floor) do not exist
+    # for 2024 — the cap IS the flat limit. On a profile with >$10,000 of
+    # state+local tax the cap binds directly, exercising the pre-OBBBA
+    # §164(b)(6) branch that the 2025 $40,000 cap seldom touches.
+    cap:
+      value: 10000
+      source: "IRC §164(b)(6)(B) (TY2018-2025 flat $10,000 aggregate SALT limitation, pre-OBBBA); 2024 Instructions for Schedule A (Form 1040), line 5e: 'the total ... is limited to $10,000 ($5,000 if married filing separately)'"
+    cap_married_filing_separately:
+      value: 5000
+      source: "IRC §164(b)(6)(B) (half the limitation for MFS); 2024 Instructions for Schedule A (Form 1040), line 5e: '$5,000 if married filing separately'"
+  qbi:
+    threshold:
+      single:
+        value: 191950
+        source: "Rev. Proc. 2023-34 §3.27 (§199A(e)(2) threshold, All Other Returns): $191,950"
+      married_filing_jointly:
+        value: 383900
+        source: "Rev. Proc. 2023-34 §3.27 (MFJ): $383,900"
+      married_filing_separately:
+        value: 191950
+        source: "Rev. Proc. 2023-34 §3.27 (MFS): $191,950"
+      head_of_household:
+        value: 191950
+        source: "Rev. Proc. 2023-34 §3.27 (All Other Returns): $191,950"
+      qualifying_surviving_spouse:
+        value: 383900
+        source: "Rev. Proc. 2023-34 §3.27 (MFJ; surviving spouse files joint-equivalent): $383,900"
+    phase_in_range_top:
+      single:
+        value: 241950
+        source: "Rev. Proc. 2023-34 §3.27 (phase-in range amount, All Other Returns): $241,950"
+      married_filing_jointly:
+        value: 483900
+        source: "Rev. Proc. 2023-34 §3.27 (MFJ): $483,900"
+      married_filing_separately:
+        value: 241950
+        source: "Rev. Proc. 2023-34 §3.27 (MFS): $241,950"
+      head_of_household:
+        value: 241950
+        source: "Rev. Proc. 2023-34 §3.27 (All Other Returns): $241,950"
+      qualifying_surviving_spouse:
+        value: 483900
+        source: "Rev. Proc. 2023-34 §3.27 (MFJ): $483,900"
+  amt:
+    # For the Form 6251 trigger guard (telos-ops#12); NOT a full AMT engine.
+    exemption:
+      single:
+        value: 85700
+        source: "Rev. Proc. 2023-34 §3.11 (§55(d)(1), Unmarried Individuals other than Surviving Spouses): $85,700"
+      married_filing_jointly:
+        value: 133300
+        source: "Rev. Proc. 2023-34 §3.11 (Joint Returns or Surviving Spouses): $133,300"
+      married_filing_separately:
+        value: 66650
+        source: "Rev. Proc. 2023-34 §3.11 (MFS): $66,650"
+      head_of_household:
+        value: 85700
+        source: "Rev. Proc. 2023-34 §3.11 (Unmarried Individuals other than Surviving Spouses): $85,700"
+      qualifying_surviving_spouse:
+        value: 133300
+        source: "Rev. Proc. 2023-34 §3.11 (Joint Returns or Surviving Spouses): $133,300"
+    exemption_phaseout_threshold:
+      single:
+        value: 609350
+        source: "Rev. Proc. 2023-34 §3.11 (§55(d)(2) threshold phaseout, Unmarried Individuals other than Surviving Spouses): $609,350"
+      married_filing_jointly:
+        value: 1218700
+        source: "Rev. Proc. 2023-34 §3.11 (Joint Returns or Surviving Spouses): $1,218,700"
+      married_filing_separately:
+        value: 609350
+        source: "Rev. Proc. 2023-34 §3.11 (MFS): $609,350"
+      head_of_household:
+        value: 609350
+        source: "Rev. Proc. 2023-34 §3.11 (Unmarried Individuals other than Surviving Spouses): $609,350"
+      qualifying_surviving_spouse:
+        value: 1218700
+        source: "Rev. Proc. 2023-34 §3.11 (Joint Returns or Surviving Spouses): $1,218,700"
+    rate_28pct_breakpoint:
+      value: 232600
+      source: "Rev. Proc. 2023-34 §3.11 (§55(b)(1) 28% breakpoint, All Other Taxpayers; MFS is $116,300): $232,600"
+    exemption_phaseout_rate:
+      value: "0.25"
+      source: "IRC §55(d)(3)(A) (25% of the excess over the threshold, pre-OBBBA; OBBBA §70107 raises it to 50% only for TY2026+); corroborated by Rev. Proc. 2023-34 §3.11 complete-phaseout amounts ($952,150 = $609,350 + $85,700/0.25 unmarried; $1,751,900 = $1,218,700 + $133,300/0.25 joint)"
+  estimated_tax:
+    # Form 1040-ES / 2210 safe harbors (telos-ops#7). All statutory, NOT
+    # inflation-adjusted — same figures apply every tax year until Congress
+    # amends §6654.
+    safe_harbor_current_year_pct:
+      value: "0.90"
+      source: "IRC §6654(d)(1)(B)(i); IRS Instructions for Form 2210 (2024), 'Who Must Pay the Underpayment Penalty'"
+    safe_harbor_standard_prior_year_pct:
+      value: "1.00"
+      source: "IRC §6654(d)(1)(B)(ii); IRS Instructions for Form 2210 (2024), 'Who Must Pay the Underpayment Penalty'"
+    safe_harbor_higher_income_prior_year_pct:
+      value: "1.10"
+      source: "IRC §6654(d)(1)(C)(i); IRS Instructions for Form 2210 (2024), 'Higher income taxpayers'"
+    higher_income_agi_threshold:
+      single:
+        value: 150000
+        source: "IRC §6654(d)(1)(C)(i); IRS Instructions for Form 2210 (2024), 'Higher income taxpayers'"
+      married_filing_jointly:
+        value: 150000
+        source: "IRC §6654(d)(1)(C)(i); IRS Instructions for Form 2210 (2024), 'Higher income taxpayers'"
+      married_filing_separately:
+        value: 75000
+        source: "IRC §6654(d)(1)(C)(i) (MFS threshold is half); IRS Instructions for Form 2210 (2024), 'Higher income taxpayers'"
+      head_of_household:
+        value: 150000
+        source: "IRC §6654(d)(1)(C)(i); IRS Instructions for Form 2210 (2024), 'Higher income taxpayers'"
+      qualifying_surviving_spouse:
+        value: 150000
+        source: "IRC §6654(d)(1)(C)(i); IRS Instructions for Form 2210 (2024), 'Higher income taxpayers'"

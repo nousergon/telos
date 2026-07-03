@@ -12,6 +12,41 @@ Inputs the caller must supply per the worksheet's own text:
 - line 3: if filing Schedule D, the smaller of Schedule D lines 15 or 16
   (zero if either is blank or a loss); otherwise Form 1040 line 7a. The
   Schedule D module (telos-ops#4) produces this; it is never negative.
+
+Year-structure mechanism decision (telos-ops#18, governs TY2024/2025/2026)
+--------------------------------------------------------------------------
+The TY2024 replay work (telos-ops#18) asked whether the QDCGT worksheet's
+LINE STRUCTURE is year-dependent — specifically whether the 2024 worksheet
+carries a Form 4952 (investment-interest) line that the 2025 worksheet
+dropped, which would force either a year-conditional branch here or per-year
+worksheet modules.
+
+Resolved by fetching the primary source: the 2024 Instructions for Form 1040
+(irs.gov/pub/irs-prior/i1040gi--2024.pdf, "Qualified Dividends and Capital
+Gain Tax Worksheet—Line 16"). It is IDENTICAL in structure to 2025 — the same
+25 lines, line 5 = line 1 minus line 4 directly, and NO Form 4952 line
+(``4952`` appears nowhere in the worksheet). The investment-interest line that
+prompted the question lives in the SEPARATE, longer *Schedule D Tax
+Worksheet* (used only when there is 28%-rate gain or unrecaptured §1250
+gain), which is a different worksheet not implemented here and itself stable
+across these years.
+
+Decision: **no year-conditional branch and no per-year worksheet module.** The
+QDCGT worksheet structure is year-STABLE for 2024-2026; the only year variance
+is in the numeric breakpoints (lines 6 and 13), which already come from the
+tax-year ``ParamPack`` (``ltcg.zero_rate_max`` / ``ltcg.fifteen_rate_max``).
+This single implementation is therefore correct for every one of those years
+by loading the right pack. Should a future year re-introduce a structural line
+(e.g. the pre-2018 investment-interest adjustment), branch on ``pack.tax_year``
+here rather than forking the module, so the provenance stays in one place.
+
+The parallel Tax Computation Worksheet question (telos-ops#18 item 3) resolves
+the same way: the 2024 TCW "multiply-then-subtract" rows were recomputed from
+the 2024 brackets and verified against the printed 2024 TCW subtraction
+amounts (e.g. single 24% row subtraction $6,957.50, MFJ 22% row $9,894.00) —
+each row is exactly the progressive bracket formula, so ``tax_lookup`` needs
+no per-year constants and stays correct via ``tax_from_brackets`` on the
+pack's bracket schedule.
 """
 
 from __future__ import annotations
