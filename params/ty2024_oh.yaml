@@ -1,0 +1,69 @@
+# TY2024 Ohio parameter pack. Every value transcribed 2026-07-03 from the
+# official 2024 Ohio IT 1040 / SD 100 instruction booklet (fetched from
+# dam.assets.ohio.gov/.../2024/it1040-booklet.pdf).
+#
+# TY2024 is a TWO-RATE year (2.75% / 3.50%) — distinct from TY2025, which
+# lowered the top rate to 3.125% and changed the mid-bracket base. As in the
+# 2025 pack, the printed bracket constants are NOT algebraically chained: the
+# $360.69 mid-base creates a real discontinuity at the $26,050 boundary (a
+# taxpayer at exactly $26,050 owes $0, but a taxpayer at $26,051 owes
+# $360.69 + 2.75% of $1). They are implemented exactly as printed, never
+# re-derived. The engine's chaining cross-check (test_ty2024_oh_pack.py)
+# verifies only the $100,000 boundary, where $360.69 + 2.75%*(100,000-26,050)
+# = $2,394.315 rounds to the printed $2,394.32 top-bracket base.
+tax_year: 2024
+status: final
+values:
+  nonbusiness_brackets:
+    zero_limit:
+      value: 26050
+      source: "2024 Ohio IT 1040 instructions p.18 tax brackets: '0 - $26,050: 0.00%'"
+    mid_base:
+      value: "360.69"
+      source: "2024 Ohio IT 1040 instructions p.18: '$360.69 plus 2.75% of the amount in excess of $26,050'"
+    mid_rate:
+      value: "0.0275"
+      source: "2024 Ohio IT 1040 instructions p.18 (2.75%)"
+    mid_limit:
+      value: 100000
+      source: "2024 Ohio IT 1040 instructions p.18 ('$26,050 - $100,000' row)"
+    top_base:
+      value: "2394.32"
+      source: "2024 Ohio IT 1040 instructions p.18: '$2,394.32 plus 3.50% of the amount in excess of $100,000'"
+    top_rate:
+      value: "0.035"
+      source: "2024 Ohio IT 1040 instructions p.18 (3.50%; lowered to 3.125% only in 2025)"
+  exemption:
+    # 2024 printed exemption table has only THREE tiers (2025 added a $0 tier
+    # at $750,000). tier3 applies to ALL MAGI above $80,000 — there is no
+    # complete-phaseout in 2024. tier3_magi_limit is set to a sentinel above
+    # any plausible MAGI so the engine's tiered lookup always resolves to the
+    # printed $1,900 amount for the top tier.
+    tier1_magi_limit:
+      value: 40000
+      source: "2024 Ohio IT 1040 instructions p.17 exemption table: 'MAGI $40,000 or less -> $2,400'"
+    tier1_amount:
+      value: 2400
+      source: "2024 Ohio IT 1040 instructions p.17"
+    tier2_magi_limit:
+      value: 80000
+      source: "2024 Ohio IT 1040 instructions p.17: '$40,001 - $80,000 -> $2,150'"
+    tier2_amount:
+      value: 2150
+      source: "2024 Ohio IT 1040 instructions p.17"
+    tier3_magi_limit:
+      value: 999999999
+      source: "2024 Ohio IT 1040 instructions p.17: 'More than $80,000 -> $1,900' (no upper limit / no complete-phaseout tier in 2024; sentinel so the top tier always resolves)"
+    tier3_amount:
+      value: 1900
+      source: "2024 Ohio IT 1040 instructions p.17: 'More than $80,000 -> $1,900'"
+  business_income_deduction:
+    cap:
+      value: 250000
+      source: "2024 Ohio IT 1040 instructions p.11: 'deduct the first $250,000 ($125,000 for married separate filers) of their business income'"
+    cap_married_filing_separately:
+      value: 125000
+      source: "2024 Ohio IT 1040 instructions p.11"
+    flat_rate_on_remainder:
+      value: "0.03"
+      source: "2024 Ohio IT 1040 instructions p.11: 'any business income not deducted is taxed at a flat 3%'"
