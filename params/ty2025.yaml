@@ -236,3 +236,32 @@ values:
     rate_28pct_breakpoint:
       value: 239100
       source: "Rev. Proc. 2024-40 §2.11 (§55(b)(1) 28% breakpoint, All Other Taxpayers; MFS is $119,550)"
+  estimated_tax:
+    # Form 1040-ES / 2210 safe harbors (telos-ops#7). All statutory, NOT
+    # inflation-adjusted — same figures apply every tax year until Congress
+    # amends §6654.
+    safe_harbor_current_year_pct:
+      value: "0.90"
+      source: "IRC §6654(d)(1)(B)(i); IRS Instructions for Form 2210 (2025), 'Who Must Pay the Underpayment Penalty'"
+    safe_harbor_standard_prior_year_pct:
+      value: "1.00"
+      source: "IRC §6654(d)(1)(B)(ii); IRS Instructions for Form 2210 (2025), 'Who Must Pay the Underpayment Penalty'"
+    safe_harbor_higher_income_prior_year_pct:
+      value: "1.10"
+      source: "IRC §6654(d)(1)(C)(i); IRS Instructions for Form 2210 (2025), 'Higher income taxpayers'"
+    higher_income_agi_threshold:
+      single:
+        value: 150000
+        source: "IRC §6654(d)(1)(C)(i); IRS Instructions for Form 2210 (2025), 'Higher income taxpayers'"
+      married_filing_jointly:
+        value: 150000
+        source: "IRC §6654(d)(1)(C)(i); IRS Instructions for Form 2210 (2025), 'Higher income taxpayers'"
+      married_filing_separately:
+        value: 75000
+        source: "IRC §6654(d)(1)(C)(i) (MFS threshold is half); IRS Instructions for Form 2210 (2025), 'Higher income taxpayers'"
+      head_of_household:
+        value: 150000
+        source: "IRC §6654(d)(1)(C)(i); IRS Instructions for Form 2210 (2025), 'Higher income taxpayers'"
+      qualifying_surviving_spouse:
+        value: 150000
+        source: "IRC §6654(d)(1)(C)(i); IRS Instructions for Form 2210 (2025), 'Higher income taxpayers'"
