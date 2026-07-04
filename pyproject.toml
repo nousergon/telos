@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "telos"
-version = "0.1.0"
+version = "0.2.0"
 description = "telos (Greek τέλος — completion, purpose; the ancient word for a tax): a deterministic personal tax engine. LLM document ingestion in front, pure-code computation in the middle, official-form output at the back."
 readme = "README.md"
 requires-python = ">=3.11"
