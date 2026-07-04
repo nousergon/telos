@@ -98,6 +98,25 @@ class PlanningScenario(BaseModel):
 
     estimated_payments_made: tuple[EstimatedPaymentMade, ...] = ()
 
+    # Ohio nonresident IT 1040ES anchors (telos-ops#21) — only consulted when
+    # ``project()`` is called with an ``oh_pack``; harmless defaults for
+    # scenarios with no Ohio exposure.
+    prior_year_oh_tax: Optional[Decimal] = Field(  # noqa: UP045 — pydantic-friendly
+        default=None,
+        ge=0,
+        description=(
+            "prior-year OH IT 1040 tax liability (line 10 minus line 16); "
+            "None if no prior-year Ohio return was filed — the ITES "
+            "100%-of-prior-year harbor is then unavailable, matching the "
+            "worksheet's own caveat, and only the 90%-of-current-year figure applies"
+        ),
+    )
+    oh_withholding: Decimal = Field(
+        default=_ZERO, ge=0,
+        description="Ohio withholding/estimated payments already made toward the OH liability",
+    )
+    oh_exemptions: int = Field(default=1, ge=1)
+
     @field_validator("as_of")
     @classmethod
     def _as_of_iso(cls, v: str) -> str:
