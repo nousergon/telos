@@ -24,15 +24,19 @@ from decimal import ROUND_HALF_UP, Decimal
 from telos.contracts import (
     EstimatedTaxRequest,
     Form8949Box,
+    OhioSection,
     ProjectedLiability,
     RealizedLot,
     RealizedLots,
     SafeHarborSummary,
     TaxProjection,
     Term,
+    WaExciseSection,
 )
 from telos.engine import marginal_rate
 from telos.engine.estimated import EstimatedTaxResult, compute_estimated_tax
+from telos.engine.ohio import OhioNonresidentInputs, ohio_estimated_tax_check, ohio_nonresident
+from telos.engine.wa_excise import wa_excise_check
 from telos.orchestrate import FederalReturn, FullReturnInputs, compute_federal_return
 from telos.params import ParamPack
 from telos.planning.flags import flag_quarters
@@ -104,7 +108,87 @@ def build_full_year_inputs(scenario: PlanningScenario) -> FullReturnInputs:
     )
 
 
-def project(scenario: PlanningScenario, pack: ParamPack) -> ProjectionOutcome:
+def _dedupe(sources: tuple[str, ...]) -> tuple[str, ...]:
+    seen: dict[str, None] = {}
+    for src in sources:
+        seen.setdefault(src)
+    return tuple(seen)
+
+
+def _build_wa_section(scenario: PlanningScenario, wa_pack: ParamPack) -> WaExciseSection:
+    """Plan §6.4 checkers-cite-their-work: the determination is emitted WITH
+    the computation shown even when the check is not applicable."""
+    det = wa_excise_check(scenario.lt_net_gain, wa_pack)
+    message = f"{det.explanation.label}: {'; '.join(det.explanation.sources)}"
+    return WaExciseSection(
+        applicable=det.applicable,
+        wa_allocable_long_term_gain=scenario.lt_net_gain,
+        taxable_gain=det.taxable_gain,
+        tax=det.tax,
+        message=message,
+        citations=det.explanation.all_sources(),
+    )
+
+
+def _build_ohio_section(
+    scenario: PlanningScenario, federal_agi: Decimal, oh_pack: ParamPack
+) -> OhioSection:
+    """telos-ops#21 scope: the scenario's ENTIRE Schedule E is treated as the
+    Ohio-source duplex — ``RentalArrangement`` carries no per-property state
+    tag, so a multi-state Schedule E would misattribute here."""
+    schedule_e = scenario.schedule_e
+    total_biz = (
+        sum((a.net_income_post_caps for a in schedule_e.arrangements), start=_ZERO)
+        if schedule_e is not None
+        else _ZERO
+    )
+    oh_inputs = OhioNonresidentInputs(
+        filing_status=scenario.filing_status,
+        federal_agi=federal_agi,
+        total_business_income=total_biz,
+        ohio_sourced_business_income=total_biz,
+        exemptions=scenario.oh_exemptions,
+    )
+    result = ohio_nonresident(oh_inputs, oh_pack)
+    check = ohio_estimated_tax_check(
+        current_year_oh_tax=result.net_tax.value,
+        prior_year_oh_tax=scenario.prior_year_oh_tax,
+        oh_withholding=scenario.oh_withholding,
+        pack=oh_pack,
+    )
+    message = (
+        f"OH net tax {result.net_tax.value} "
+        f"(filing {'required' if result.filing_required else 'not required'}); "
+        f"{check.explanation.label}: {'; '.join(check.explanation.sources)}"
+    )
+    citations = _dedupe(result.net_tax.all_sources() + check.explanation.all_sources())
+    return OhioSection(
+        filing_required=result.filing_required,
+        net_tax=result.net_tax.value,
+        estimated_payments_advisable=check.advisable,
+        required_annual_payment=check.required_annual_payment.value,
+        balance_after_withholding=check.balance_after_withholding.value,
+        message=message,
+        citations=citations,
+    )
+
+
+def project(
+    scenario: PlanningScenario,
+    pack: ParamPack,
+    *,
+    wa_pack: ParamPack | None = None,
+    oh_pack: ParamPack | None = None,
+) -> ProjectionOutcome:
+    """``wa_pack``/``oh_pack`` are the telos-ops#21 extension point: when
+    given, the projection also runs that state's applicability/liability
+    check and attaches the optional ``wa``/``ohio`` sections. Unlike the
+    federal ``pack``, these are NOT required to match ``scenario.tax_year`` —
+    state parameter packs routinely trail the federal calendar (e.g. WA's
+    DOR publishes the next year's inflation-adjusted standard deduction
+    later in the year), and the state engine modules themselves
+    (``wa_excise_check`` / ``ohio_nonresident``) never consult a tax-year at
+    all. Callers are responsible for supplying the pack-year they intend."""
     if pack.tax_year != scenario.tax_year:
         raise ValueError(
             f"scenario is TY{scenario.tax_year} but pack is TY{pack.tax_year} — "
@@ -164,6 +248,8 @@ def project(scenario: PlanningScenario, pack: ParamPack) -> ProjectionOutcome:
         ),
         quarters=quarters,
         headline=headline,
+        wa=_build_wa_section(scenario, wa_pack) if wa_pack is not None else None,
+        ohio=_build_ohio_section(scenario, agi, oh_pack) if oh_pack is not None else None,
     )
     return ProjectionOutcome(federal=federal, estimated=estimated, artifact=artifact)
 
