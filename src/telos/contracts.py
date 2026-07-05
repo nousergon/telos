@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 from enum import StrEnum
+from itertools import pairwise
 from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -206,12 +207,43 @@ class EstimatedTaxRequest(BaseModel):
     use_annualized_income_method: bool = Field(
         default=False,
         description=(
-            "annualized-income-installment method (Schedule AI) for unevenly "
-            "distributed income — NOT YET IMPLEMENTED (telos-ops#7 stub); "
-            "compute_estimated_tax raises rather than silently falling back "
-            "to the even-installment method"
+            "annualized-income-installment method (Schedule AI, §6654(d)(2)) "
+            "for unevenly distributed income; when True, "
+            "annualized_period_taxable_income must be supplied and "
+            "compute_estimated_tax sizes the four required installments from "
+            "cumulative income rather than splitting the annual harbor evenly"
         ),
     )
+    annualized_period_taxable_income: tuple[Decimal, Decimal, Decimal, Decimal] | None = Field(
+        default=None,
+        description=(
+            "Schedule AI Part I input: taxable income actually accumulated "
+            "through the END of each annualization period — the four §6654(d)(2) "
+            "periods for a calendar-year taxpayer are Jan 1-Mar 31, Jan 1-May 31, "
+            "Jan 1-Aug 31, and the full year. CUMULATIVE and non-decreasing; the "
+            "4th value is the full-year taxable income. Required (and only used) "
+            "when use_annualized_income_method is True"
+        ),
+    )
+
+    @model_validator(mode="after")
+    def _annualized_inputs_present_when_requested(self) -> EstimatedTaxRequest:
+        if self.use_annualized_income_method and self.annualized_period_taxable_income is None:
+            raise ValueError(
+                "use_annualized_income_method=True requires "
+                "annualized_period_taxable_income (the four cumulative "
+                "period taxable-income figures from Schedule AI Part I)"
+            )
+        if self.annualized_period_taxable_income is not None:
+            vals = self.annualized_period_taxable_income
+            if any(v < 0 for v in vals):
+                raise ValueError("annualized_period_taxable_income entries must be >= 0")
+            if any(b < a for a, b in pairwise(vals)):
+                raise ValueError(
+                    "annualized_period_taxable_income must be non-decreasing "
+                    "(each period is cumulative from Jan 1)"
+                )
+        return self
 
 
 def estimated_tax_request_json_schema() -> dict:

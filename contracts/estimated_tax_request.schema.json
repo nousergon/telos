@@ -15,6 +15,67 @@
   "additionalProperties": false,
   "description": "1040-ES / 2210 quarterly-voucher inputs \u2014 Metron-callable (telos-ops#7).\n\nPlain typed data only (filing status + prior/current-year totals): a\ncaller assembles this from its own tax-liability estimate without\nimporting anything from ``telos.engine``. Feed it to\n``telos.engine.estimated.compute_estimated_tax`` alongside a\n``ParamPack`` for the target tax year.",
   "properties": {
+    "annualized_period_taxable_income": {
+      "anyOf": [
+        {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                  "type": "string"
+                }
+              ]
+            }
+          ],
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Schedule AI Part I input: taxable income actually accumulated through the END of each annualization period \u2014 the four \u00a76654(d)(2) periods for a calendar-year taxpayer are Jan 1-Mar 31, Jan 1-May 31, Jan 1-Aug 31, and the full year. CUMULATIVE and non-decreasing; the 4th value is the full-year taxable income. Required (and only used) when use_annualized_income_method is True",
+      "title": "Annualized Period Taxable Income"
+    },
     "current_year_projected_tax": {
       "anyOf": [
         {
@@ -88,7 +149,7 @@
     },
     "use_annualized_income_method": {
       "default": false,
-      "description": "annualized-income-installment method (Schedule AI) for unevenly distributed income \u2014 NOT YET IMPLEMENTED (telos-ops#7 stub); compute_estimated_tax raises rather than silently falling back to the even-installment method",
+      "description": "annualized-income-installment method (Schedule AI, \u00a76654(d)(2)) for unevenly distributed income; when True, annualized_period_taxable_income must be supplied and compute_estimated_tax sizes the four required installments from cumulative income rather than splitting the annual harbor evenly",
       "title": "Use Annualized Income Method",
       "type": "boolean"
     }

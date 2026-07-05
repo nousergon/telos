@@ -14,11 +14,22 @@ from telos.engine.amt_guard import (
 from telos.engine.brackets import Bracket, marginal_rate, tax_from_brackets
 from telos.engine.estimated import (
     AnnualizedIncomeMethodNotImplementedError,
+    AnnualizedInstallment,
+    AnnualizedInstallmentResult,
     EstimatedTaxResult,
     QuarterlyVoucher,
+    compute_annualized_installments,
     compute_estimated_tax,
 )
 from telos.engine.form1040 import Form1040Inputs, Form1040Result, assemble_1040
+from telos.engine.form2210 import (
+    Form2210Result,
+    InstallmentPenalty,
+    InstallmentUnderpayment,
+    RateNotAvailableError,
+    compute_form2210_penalty,
+    compute_installment_penalty,
+)
 from telos.engine.form8949 import BoxTotals, WashSaleRiskError, check_wash_risk, form8949_totals
 from telos.engine.form8959 import Form8959Result, MissingMedicareWagesError, form8959
 from telos.engine.form8960 import Form8960Inputs, Form8960Result, form8960
@@ -50,6 +61,8 @@ __all__ = [
     "AmtReviewRequired",
     "AmtScreenResult",
     "AnnualizedIncomeMethodNotImplementedError",
+    "AnnualizedInstallment",
+    "AnnualizedInstallmentResult",
     "BoxTotals",
     "Bracket",
     "CoverageError",
@@ -58,11 +71,14 @@ __all__ = [
     "FieldMismatch",
     "Form1040Inputs",
     "Form1040Result",
+    "Form2210Result",
     "Form8959Result",
     "Form8960Inputs",
     "Form8960Result",
     "Form8995AInputs",
     "Form8995AResult",
+    "InstallmentPenalty",
+    "InstallmentUnderpayment",
     "LotReconciliation",
     "MissingMedicareWagesError",
     "OhioNonresidentInputs",
@@ -70,6 +86,7 @@ __all__ = [
     "QbiBusiness",
     "QdcgtResult",
     "QuarterlyVoucher",
+    "RateNotAvailableError",
     "ScheduleAInputs",
     "ScheduleAResult",
     "ScheduleDInputs",
@@ -84,7 +101,10 @@ __all__ = [
     "assemble_1040",
     "check_wash_risk",
     "choose_deduction",
+    "compute_annualized_installments",
     "compute_estimated_tax",
+    "compute_form2210_penalty",
+    "compute_installment_penalty",
     "form8949_totals",
     "form8959",
     "form8960",
