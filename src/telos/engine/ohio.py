@@ -29,6 +29,7 @@ from telos.models import FilingStatus
 from telos.params import ParamPack
 
 CITE = "2025 Ohio IT 1040 instructions"
+ES_CITE = "2026 Ohio Estimated Income Tax Payment Worksheet (IT 1040 ES) / ORC 5747.09"
 _ZERO = Decimal(0)
 _ONE = Decimal(1)
 
@@ -56,6 +57,88 @@ class OhioResult:
     lines: Mapping[str, Traced]
     net_tax: Traced
     filing_required: bool
+
+
+@dataclass(frozen=True)
+class OhioEstimatedTaxCheck:
+    """OH IT 1040ES / ORC 5747.09's OWN safe harbor — separate from the
+    federal §6654 harbor (``telos.engine.estimated``). Ohio has no
+    higher-income 110% tier: the required annual payment is the LESSER of
+    90% of the current-year OH tax or 100% of the prior-year OH tax (only
+    when a prior-year OH return was filed — otherwise 90%-of-current-year is
+    the only available figure, per the worksheet's own caveat)."""
+
+    advisable: bool
+    required_annual_payment: Traced
+    balance_after_withholding: Traced
+    explanation: Traced
+
+
+def ohio_estimated_tax_check(
+    *,
+    current_year_oh_tax: Decimal,
+    prior_year_oh_tax: Decimal | None,
+    oh_withholding: Decimal,
+    pack: ParamPack,
+) -> OhioEstimatedTaxCheck:
+    """Whether OH IT 1040ES estimated payments are advisable, WITH the
+    computation shown even when the answer is "not advisable" (the
+    checkers-cite-their-work rule already used by ``wa_excise_check``)."""
+    current_pct = pack.get("estimated_tax.safe_harbor_current_year_pct")
+    current_harbor = Traced(
+        label="oh_estimated:current_year_safe_harbor",
+        value=round_whole_dollar(current_year_oh_tax * current_pct.value),
+        sources=(f"{ES_CITE}: line 10, 90% of estimated current-year OH tax",),
+        inputs=(current_pct,),
+    )
+
+    if prior_year_oh_tax is not None:
+        prior_pct = pack.get("estimated_tax.safe_harbor_prior_year_pct")
+        prior_harbor = Traced(
+            label="oh_estimated:prior_year_safe_harbor",
+            value=round_whole_dollar(prior_year_oh_tax * prior_pct.value),
+            sources=(f"{ES_CITE}: line 9/11, 100% of prior-year OH tax",),
+            inputs=(prior_pct,),
+        )
+        required = prior_harbor if prior_harbor.value <= current_harbor.value else current_harbor
+    else:
+        # No prior-year OH return filed — the 100% harbor is unavailable;
+        # the worksheet says to use the 90%-of-current-year figure directly.
+        required = current_harbor
+
+    withholding = Traced(
+        label="oh_estimated:withholding_and_payments_made",
+        value=oh_withholding,
+        sources=("scenario-provided Ohio withholding/estimated payments already made",),
+    )
+    balance = Traced(
+        label="oh_estimated:balance_after_withholding",
+        value=max(required.value - withholding.value, _ZERO),
+        inputs=(required, withholding),
+    )
+
+    threshold = pack.get("estimated_tax.de_minimis_threshold")
+    advisable = balance.value > threshold.value
+    expl = Traced(
+        label=(
+            "oh_estimated:ADVISABLE — consider OH 1040ES payments"
+            if advisable
+            else "oh_estimated:not advisable"
+        ),
+        value=balance.value,
+        sources=(
+            f"{ES_CITE}(B): estimated payments needed only when the balance "
+            f"after withholding ({balance.value}) exceeds the ${threshold.value} "
+            f"de minimis threshold",
+        ),
+        inputs=(balance, threshold),
+    )
+    return OhioEstimatedTaxCheck(
+        advisable=advisable,
+        required_annual_payment=required,
+        balance_after_withholding=balance,
+        explanation=expl,
+    )
 
 
 def _nonbusiness_tax(taxable: Decimal, pack: ParamPack) -> Decimal:

@@ -29,6 +29,10 @@ pull request.
 - **Every tax parameter needs a primary-source citation** (Revenue Procedure /
   form instruction) in `params/`. PRs adding uncited constants will not merge.
 - **No LLM calls in `engine/`.** The arithmetic path is deterministic code only.
+- **Version tags and `pyproject.toml` must move together.** Any PR that pushes
+  a new `vX.Y.Z` tag must bump `[project].version` in `pyproject.toml` to
+  `X.Y.Z` in the same PR (and vice versa) — don't let one drift ahead of the
+  other.
 
 ## Scope
 

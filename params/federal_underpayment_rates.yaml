@@ -1,0 +1,50 @@
+# Federal §6621 quarterly underpayment interest rates (non-corporate).
+#
+# These are NOT tax-year constants — they are CALENDAR-QUARTER rates that
+# change every quarter (IRC §6621(b): the federal short-term rate + 3 points,
+# redetermined quarterly by Revenue Ruling). A single tax year's Form 2210
+# penalty spans several quarters (a TY2025 Q4 installment underpayment accrues
+# interest from 2025-10-01 through the 2026-04-15 filing date, touching the
+# Q4-2025 and Q1/Q2-2026 rates), so these live in their OWN file keyed by
+# calendar quarter rather than inside any per-tax-year pack.
+#
+# The file is validated by the same params contract (telos.params.load_pack):
+# every leaf is a {value, source} mapping and every `source` names the actual
+# quarterly Revenue Ruling. Each value below was transcribed on 2026-07-05 from
+# the cited IRS Revenue Ruling (fetched from irs.gov), NEVER from memory.
+#
+# `tax_year` is a required field of the ParamPack model; this file is not a
+# tax-year pack, so it carries the sentinel 0 (the loader ignores it for a
+# rates file — callers resolve rates by calendar quarter, not by tax year).
+tax_year: 0
+status: final
+values:
+  # Rate is the non-corporate UNDERPAYMENT rate under §6621(a)(2), applicable
+  # to the §6654/§6655 addition to tax. Stored as an annual simple rate; the
+  # Form 2210 penalty worksheet applies it as rate × days/365 per period.
+  underpayment_rate:
+    "2025Q1":
+      value: "0.07"
+      source: "Rev. Rul. 2024-25, 2024-49 I.R.B. — underpayment rate 7% for the calendar quarter beginning Jan 1, 2025 (fed short-term rate 4% + 3 points)"
+    "2025Q2":
+      value: "0.07"
+      source: "Rev. Rul. 2025-7, 2025-13 I.R.B. — underpayment rate 7% for the calendar quarter beginning Apr 1, 2025"
+    "2025Q3":
+      value: "0.07"
+      source: "Rev. Rul. 2025-11, 2025-23 I.R.B. — underpayment rate 7% for the calendar quarter beginning Jul 1, 2025"
+    "2025Q4":
+      value: "0.07"
+      source: "Rev. Rul. 2025-18, 2025-37 I.R.B. — underpayment rate 7% for the calendar quarter beginning Oct 1, 2025"
+    "2026Q1":
+      value: "0.07"
+      source: "Rev. Rul. 2025-22, 2025-48 I.R.B. — underpayment rate 7% for the calendar quarter beginning Jan 1, 2026 (also applies to estimated-tax underpayments for Q1 2026)"
+    # The §6654 penalty period ends on the filing due date (Apr 15 following the
+    # tax year), which falls INSIDE 2026Q2. But §6621(b)(2)(B) freezes the rate
+    # for those first 15 days of the 4th month to the rate governing the 3rd
+    # month (i.e. the Q1-2026 rate, 7%), NOT the actual published Q2-2026 rate
+    # (which dropped to 6% per Rev. Rul. 2026-? / 2026-08 I.R.B.). This entry is
+    # that frozen §6654 rate, deliberately keyed "2026Q2-6654" to avoid being
+    # mistaken for the general Q2-2026 underpayment rate.
+    "2026Q2-6654":
+      value: "0.07"
+      source: "IRC §6621(b)(2)(B) + Rev. Rul. 2025-22, 2025-48 I.R.B. — for the §6654 addition, the fed short-term rate for the 3rd month following the taxable year (which set the Q1-2026 rate, 7%) also applies during the first 15 days of the 4th month (through the Apr 15, 2026 filing due date); the general published Q2-2026 rate of 6% (2026-08 I.R.B.) does NOT apply to this window"
