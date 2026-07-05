@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --c-paper: 9 9 11;
+  --c-surface: 19 19 22;
+  --c-ink: 244 244 245;
+  --c-muted: 161 161 170;
+  --c-line: 39 39 42;
+  --c-positive: 52 211 153;
+  --c-negative: 251 113 133;
+  --c-accent: 56 189 248;
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-paper text-ink antialiased;
+}
