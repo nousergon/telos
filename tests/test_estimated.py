@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from telos.contracts import EstimatedTaxRequest, estimated_tax_request_json_schema
 from telos.engine.estimated import (
-    AnnualizedIncomeMethodNotImplementedError,
+    compute_annualized_installments,
     compute_estimated_tax,
 )
 from telos.models import FilingStatus
@@ -170,9 +170,131 @@ class TestVouchers:
         assert "Q1 due 2025-04-15" in text
 
 
-class TestAnnualizedIncomeMethodStub:
-    def test_requesting_annualized_method_raises_not_silently_falls_back(self):
-        with pytest.raises(AnnualizedIncomeMethodNotImplementedError):
-            compute_estimated_tax(
-                request(use_annualized_income_method=True), PACK, tax_year=2025
+class TestAnnualizedIncomeMethod:
+    """Schedule AI (§6654(d)(2)) — telos-ops#20."""
+
+    def test_requires_period_income_when_method_requested(self):
+        with pytest.raises(ValidationError):
+            request(use_annualized_income_method=True)
+
+    def test_period_income_must_be_non_decreasing(self):
+        with pytest.raises(ValidationError):
+            request(
+                use_annualized_income_method=True,
+                annualized_period_taxable_income=(D(50_000), D(40_000), D(80_000), D(120_000)),
             )
+
+    def test_period_income_must_be_non_negative(self):
+        with pytest.raises(ValidationError):
+            request(
+                use_annualized_income_method=True,
+                annualized_period_taxable_income=(D(-1), D(40_000), D(80_000), D(120_000)),
+            )
+
+    def test_even_income_reproduces_even_installments(self):
+        """PROPERTY: income arriving ratably must annualize to the same four
+        even installments the safe-harbor (even-installment) method produces —
+        the annualized method may only ever *lower* a penalty, never raise a
+        voucher above the plain 25% installment for smooth income."""
+        # 90%-of-current-year harbor governs here: prior-year tax is huge.
+        # Ratable income of 120k/yr = 10k/month; the §6654 annualization
+        # periods END at months 3, 5, 8, 12 (NOT 3/6/9/12), so ratable
+        # cumulative taxable income is 30k / 50k / 80k / 120k.
+        full_year = D(120_000)
+        cumulative = (D(30_000), D(50_000), D(80_000), full_year)  # exactly ratable
+        annualized_req = request(
+            prior_year_tax=D(1_000_000),
+            current_year_projected_tax=D(20_000),
+            use_annualized_income_method=True,
+            annualized_period_taxable_income=cumulative,
+        )
+        even_req = request(
+            prior_year_tax=D(1_000_000), current_year_projected_tax=D(20_000)
+        )
+        r_ann = compute_estimated_tax(annualized_req, PACK, tax_year=2025)
+        r_even = compute_estimated_tax(even_req, PACK, tax_year=2025)
+        assert [v.amount.value for v in r_ann.vouchers] == [
+            v.amount.value for v in r_even.vouchers
+        ]
+
+    @pytest.mark.parametrize(
+        "cumulative",
+        [
+            (D(0), D(0), D(0), D(120_000)),  # all income in Q4
+            (D(120_000), D(120_000), D(120_000), D(120_000)),  # all income in Q1
+            (D(10_000), D(25_000), D(90_000), D(120_000)),  # lumpy
+        ],
+    )
+    def test_annualized_vouchers_never_exceed_total_and_sum_to_it(self, cumulative):
+        req = request(
+            prior_year_tax=D(1_000_000),
+            current_year_projected_tax=D(20_000),
+            use_annualized_income_method=True,
+            annualized_period_taxable_income=cumulative,
+        )
+        r = compute_estimated_tax(req, PACK, tax_year=2025)
+        assert sum(v.amount.value for v in r.vouchers) == r.total_estimated_tax_due.value
+        assert all(v.amount.value >= 0 for v in r.vouchers)
+
+    def test_backloaded_income_defers_early_installments(self):
+        """Income all in Q4 -> the first three annualized installments are 0
+        (nothing has been earned yet), the whole requirement lands on Q4."""
+        req = request(
+            prior_year_tax=D(1_000_000),
+            current_year_projected_tax=D(20_000),
+            use_annualized_income_method=True,
+            annualized_period_taxable_income=(D(0), D(0), D(0), D(120_000)),
+        )
+        r = compute_estimated_tax(req, PACK, tax_year=2025)
+        amounts = [v.amount.value for v in r.vouchers]
+        assert amounts[0] == amounts[1] == amounts[2] == D(0)
+        assert amounts[3] == r.total_estimated_tax_due.value
+
+    def test_installment_worksheet_factors_and_percentages(self):
+        brackets = PACK.brackets("ordinary_brackets.single")
+        res = compute_annualized_installments(
+            (D(30_000), D(50_000), D(80_000), D(120_000)), brackets
+        )
+        factors = [i.annualization_factor.value for i in res.installments]
+        pcts = [i.applicable_percentage.value for i in res.installments]
+        assert factors == [D(4), D("2.4"), D("1.5"), D(1)]
+        assert pcts == [D("0.225"), D("0.45"), D("0.675"), D("0.90")]
+        # provenance carries the statute cite
+        cites = res.installments[0].required_installment.all_sources()
+        assert any("6654(d)(2)" in s for s in cites)
+        assert "annualized:required_installment_q1" in res.explain()
+
+    def test_zero_annualized_income_defers_everything_to_the_final_trueup(self):
+        """A degenerate all-zero annualized-income input (share denominator 0)
+        leaves the first three installments at 0; the harbor still exists (it
+        rides on projected tax, not annualized income), so its whole amount
+        trues up on the final installment."""
+        req = request(
+            prior_year_tax=D(1_000_000),
+            current_year_projected_tax=D(20_000),
+            use_annualized_income_method=True,
+            annualized_period_taxable_income=(D(0), D(0), D(0), D(0)),
+        )
+        r = compute_estimated_tax(req, PACK, tax_year=2025)
+        amounts = [v.amount.value for v in r.vouchers]
+        assert amounts[:3] == [D(0), D(0), D(0)]
+        assert amounts[3] == r.total_estimated_tax_due.value
+
+    def test_withholding_covers_liability_yields_no_annualized_vouchers(self):
+        req = request(
+            prior_year_tax=D(1_000_000),
+            current_year_projected_tax=D(20_000),
+            current_year_withholding=D(50_000),
+            use_annualized_income_method=True,
+            annualized_period_taxable_income=(D(30_000), D(50_000), D(80_000), D(120_000)),
+        )
+        r = compute_estimated_tax(req, PACK, tax_year=2025)
+        assert r.vouchers == ()
+
+
+class TestRetainedError:
+    def test_error_still_importable_and_raisable(self):
+        from telos.engine.estimated import AnnualizedIncomeMethodNotImplementedError
+
+        with pytest.raises(AnnualizedIncomeMethodNotImplementedError):
+            raise AnnualizedIncomeMethodNotImplementedError("edge sub-case")
