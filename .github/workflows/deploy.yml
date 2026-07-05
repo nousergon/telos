@@ -1,0 +1,63 @@
+name: Deploy Telos via SSM
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: telos-deploy
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy Telos via SSM
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      METRON_INSTANCE_ID: ${{ vars.METRON_INSTANCE_ID }}
+
+    steps:
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::711398986525:role/github-actions-lambda-deploy
+          aws-region: us-east-1
+
+      - name: Send SSM deploy command
+        id: send
+        run: |
+          set -euo pipefail
+          CMD_BODY="flock -w 600 /tmp/telos-deploy.lock -c 'set -e; sudo -u ec2-user git -C /home/ec2-user/telos fetch origin --quiet && sudo -u ec2-user git -C /home/ec2-user/telos reset --hard ${GITHUB_SHA} --quiet && sudo -u ec2-user git -C /home/ec2-user/telos-ops fetch origin --quiet && sudo -u ec2-user git -C /home/ec2-user/telos-ops reset --hard origin/main --quiet && sudo -u ec2-user bash /home/ec2-user/telos/infrastructure/deploy-on-merge.sh'"
+          CMD_ID=$(aws ssm send-command \
+            --instance-ids "${METRON_INSTANCE_ID}" \
+            --document-name AWS-RunShellScript \
+            --comment "telos deploy ${GITHUB_SHA}" \
+            --parameters "commands=[\"${CMD_BODY}\"]" \
+            --query 'Command.CommandId' \
+            --output text)
+          echo "command_id=${CMD_ID}" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for SSM command to finish
+        run: |
+          aws ssm wait command-executed \
+            --instance-id "${METRON_INSTANCE_ID}" \
+            --command-id "${{ steps.send.outputs.command_id }}" || true
+
+      - name: Fetch deploy output
+        if: always()
+        run: |
+          STATUS=$(aws ssm get-command-invocation \
+            --instance-id "${METRON_INSTANCE_ID}" \
+            --command-id "${{ steps.send.outputs.command_id }}" \
+            --query '[Status,ResponseCode]' --output text)
+          echo "Status: ${STATUS}"
+          aws ssm get-command-invocation \
+            --instance-id "${METRON_INSTANCE_ID}" \
+            --command-id "${{ steps.send.outputs.command_id }}" \
+            --query 'StandardOutputContent' --output text
+          echo "${STATUS}" | grep -q "^Success" || exit 1

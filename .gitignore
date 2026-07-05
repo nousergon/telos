@@ -1,3 +1,7 @@
+cache/
+web/node_modules/
+web/.next/
+
 # --- personal tax data: NEVER in version control (history goes public at the AGPL flip) ---
 data/
 inputs/
