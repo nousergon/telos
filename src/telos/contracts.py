@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 from enum import StrEnum
+from itertools import pairwise
 from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -206,12 +207,43 @@ class EstimatedTaxRequest(BaseModel):
     use_annualized_income_method: bool = Field(
         default=False,
         description=(
-            "annualized-income-installment method (Schedule AI) for unevenly "
-            "distributed income — NOT YET IMPLEMENTED (telos-ops#7 stub); "
-            "compute_estimated_tax raises rather than silently falling back "
-            "to the even-installment method"
+            "annualized-income-installment method (Schedule AI, §6654(d)(2)) "
+            "for unevenly distributed income; when True, "
+            "annualized_period_taxable_income must be supplied and "
+            "compute_estimated_tax sizes the four required installments from "
+            "cumulative income rather than splitting the annual harbor evenly"
         ),
     )
+    annualized_period_taxable_income: tuple[Decimal, Decimal, Decimal, Decimal] | None = Field(
+        default=None,
+        description=(
+            "Schedule AI Part I input: taxable income actually accumulated "
+            "through the END of each annualization period — the four §6654(d)(2) "
+            "periods for a calendar-year taxpayer are Jan 1-Mar 31, Jan 1-May 31, "
+            "Jan 1-Aug 31, and the full year. CUMULATIVE and non-decreasing; the "
+            "4th value is the full-year taxable income. Required (and only used) "
+            "when use_annualized_income_method is True"
+        ),
+    )
+
+    @model_validator(mode="after")
+    def _annualized_inputs_present_when_requested(self) -> EstimatedTaxRequest:
+        if self.use_annualized_income_method and self.annualized_period_taxable_income is None:
+            raise ValueError(
+                "use_annualized_income_method=True requires "
+                "annualized_period_taxable_income (the four cumulative "
+                "period taxable-income figures from Schedule AI Part I)"
+            )
+        if self.annualized_period_taxable_income is not None:
+            vals = self.annualized_period_taxable_income
+            if any(v < 0 for v in vals):
+                raise ValueError("annualized_period_taxable_income entries must be >= 0")
+            if any(b < a for a, b in pairwise(vals)):
+                raise ValueError(
+                    "annualized_period_taxable_income must be non-decreasing "
+                    "(each period is cumulative from Jan 1)"
+                )
+        return self
 
 
 def estimated_tax_request_json_schema() -> dict:
@@ -219,7 +251,7 @@ def estimated_tax_request_json_schema() -> dict:
     return EstimatedTaxRequest.model_json_schema()
 
 
-TAX_PROJECTION_SCHEMA_VERSION = "1.0.0"
+TAX_PROJECTION_SCHEMA_VERSION = "1.1.0"
 
 
 class QuarterPaymentStatus(StrEnum):
@@ -288,14 +320,59 @@ class PaymentHeadline(BaseModel):
     message: str
 
 
-class TaxProjection(BaseModel):
-    """Year-round tax-projection artifact — produced by ``telos.planning``,
-    consumed by dashboards (Metron /tax Planning panel). Plain data only; the
-    full audit trail stays in-process (``ProjectionOutcome.federal``)."""
+class WaExciseSection(BaseModel):
+    """WA capital-gains excise applicability check (telos-ops#21) — emitted
+    WITH the computation even when NOT applicable (checkers-cite-their-work:
+    an unexamined exemption is indistinguishable from a silent omission).
+    Optional/additive on ``TaxProjection`` (schema 1.1.0): present only when
+    the projection was run with a WA parameter pack."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    schema_version: Literal["1.0.0"] = TAX_PROJECTION_SCHEMA_VERSION
+    applicable: bool
+    wa_allocable_long_term_gain: Decimal = Field(
+        description="the scenario's lt_net_gain, as passed to the WA excise check"
+    )
+    taxable_gain: Decimal = Field(ge=0)
+    tax: Decimal = Field(ge=0)
+    message: str = Field(description="the determination, with its computation, in one line")
+    citations: tuple[str, ...] = Field(default=())
+
+
+class OhioSection(BaseModel):
+    """OH nonresident projected liability + IT 1040ES estimated-payment
+    advisory (telos-ops#21). Optional/additive on ``TaxProjection`` (schema
+    1.1.0): present only when the projection was run with an OH parameter
+    pack. Assumes the scenario's ENTIRE Schedule E is Ohio-source (the
+    duplex) — ``telos.engine.ohio`` does not support multi-state Schedule E
+    allocation, and neither does this section."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    filing_required: bool
+    net_tax: Decimal = Field(ge=0, description="OH IT 1040 net tax after the nonresident credit")
+    estimated_payments_advisable: bool
+    required_annual_payment: Decimal = Field(
+        ge=0, description="OH IT 1040ES required annual payment (lesser-of-harbors)"
+    )
+    balance_after_withholding: Decimal = Field(ge=0)
+    message: str = Field(description="the determination, with its computation, in one line")
+    citations: tuple[str, ...] = Field(default=())
+
+
+class TaxProjection(BaseModel):
+    """Year-round tax-projection artifact — produced by ``telos.planning``,
+    consumed by dashboards (Metron /tax Planning panel). Plain data only; the
+    full audit trail stays in-process (``ProjectionOutcome.federal``).
+
+    Schema 1.1.0 (telos-ops#21) added ``wa``/``ohio`` as OPTIONAL, additive
+    sections — a MINOR bump, backward compatible: a 1.0.0-shaped consumer
+    that only reads the fields it already knows about is unaffected, and the
+    Metron panel is expected to treat both new sections as optional."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: Literal["1.1.0"] = TAX_PROJECTION_SCHEMA_VERSION
     tax_year: int
     as_of: str = Field(description="ISO date the scenario reflects")
     filing_status: FilingStatus
@@ -306,6 +383,8 @@ class TaxProjection(BaseModel):
     safe_harbor: SafeHarborSummary
     quarters: tuple[QuarterFlag, ...] = ()
     headline: PaymentHeadline
+    wa: Optional[WaExciseSection] = None  # noqa: UP045 — pydantic-friendly
+    ohio: Optional[OhioSection] = None  # noqa: UP045 — pydantic-friendly
 
 
 def tax_projection_json_schema() -> dict:

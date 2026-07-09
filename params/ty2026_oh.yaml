@@ -1,0 +1,106 @@
+# TY2026 Ohio parameter pack — PROVISIONAL (telos-ops#21).
+#
+# The `estimated_tax` section and the `nonbusiness_brackets` table below are
+# CONFIRMED from a real, currently-published 2026 government document: the
+# "2026 Ohio Estimated Income Tax Payment Worksheet" (IT 1040 ES) and its
+# accompanying instructions, fetched 2026-07-03 from
+# dam.assets.ohio.gov/image/upload/v1735926006/tax.ohio.gov/forms/ohio_individual/individual/2026/ites-instructions-fi.pdf
+# ("2026 ITES worksheet" below). That worksheet prints the SAME nonbusiness
+# bracket table as TY2025 (unchanged $26,050/$100,000 boundaries, $342.00 and
+# $2,394.32 bases, 2.750%/3.125% rates) — corroborated directly, not carried
+# forward blind.
+#
+# The `exemption` and `business_income_deduction` sections are NOT confirmed
+# by a TY2026-dated document: the 2026 ITES worksheet uses its OWN
+# simplified projection shortcut for exemptions (flat $1,900 per exemption,
+# full phase-out at $500,000 MAGI) that does NOT match the real IT 1040
+# booklet's three/four-tier exemption table — it is a worksheet
+# approximation, not the filing-computation table `telos.engine.ohio`
+# implements. The final TY2026 IT 1040 instruction booklet (which carries
+# the real exemption tiers and the BID cap) is not yet published — same gap
+# telos-ops#13 tracks for the federal pack, landing ~Nov 2026 - Jan 2027.
+# Those two sections are therefore CARRIED FORWARD from `ty2025_oh.yaml`
+# and marked provisional pending the real TY2026 booklet, exactly like the
+# federal ty2026.yaml pack's NIIT/Additional Medicare provisional carries.
+#
+# status is `provisional` pack-wide (matches ty2026.yaml's convention: a
+# pack is provisional if ANY section in it is unconfirmed against final
+# forms, even when other sections are independently confirmed).
+tax_year: 2026
+status: provisional
+values:
+  nonbusiness_brackets:
+    zero_limit:
+      value: 26050
+      source: "2026 Ohio Estimated Income Tax Payment Worksheet (IT 1040 ES), tax bracket table: '0 - $26,050: 0.000% of Ohio taxable nonbusiness income' (dam.assets.ohio.gov .../2026/ites-instructions-fi.pdf, fetched 2026-07-03)"
+    mid_base:
+      value: 342
+      source: "2026 ITES worksheet tax bracket table: '$26,050 - $100,000: $342.00 plus 2.750% of the amount in excess of $26,050' — unchanged from TY2025"
+    mid_rate:
+      value: "0.0275"
+      source: "2026 ITES worksheet tax bracket table (2.750%) — unchanged from TY2025"
+    mid_limit:
+      value: 100000
+      source: "2026 ITES worksheet tax bracket table ('$26,050 - $100,000' row)"
+    top_base:
+      value: "2394.32"
+      source: "2026 ITES worksheet tax bracket table: '$100,000 - : $2,394.32 plus 3.125% of the amount in excess of $100,000' — unchanged from TY2025"
+    top_rate:
+      value: "0.03125"
+      source: "2026 ITES worksheet tax bracket table (3.125%) — unchanged from TY2025"
+  exemption:
+    # PROVISIONAL — carried forward from the TY2025 IT 1040 booklet's real
+    # (non-simplified) exemption table; the 2026 ITES worksheet's own
+    # flat-$1,900/$500,000-cutoff shortcut is a DIFFERENT, simplified
+    # mechanism used only to project a single estimated-payment number, not
+    # the filing-computation table this engine implements. Confirm against
+    # the real TY2026 IT 1040 instruction booklet once published.
+    tier1_magi_limit:
+      value: 40000
+      source: "PROVISIONAL — carried from 2025 Ohio IT 1040 instructions p.17 exemption table (MAGI $40,000 or less -> $2,400); TY2026 IT 1040 booklet not yet published, confirm at telos-ops#13-equivalent final-forms pass"
+    tier1_amount:
+      value: 2400
+      source: "PROVISIONAL — carried from 2025 Ohio IT 1040 instructions p.17"
+    tier2_magi_limit:
+      value: 80000
+      source: "PROVISIONAL — carried from 2025 Ohio IT 1040 instructions p.17: $40,001-$80,000 -> $2,150"
+    tier2_amount:
+      value: 2150
+      source: "PROVISIONAL — carried from 2025 Ohio IT 1040 instructions p.17"
+    tier3_magi_limit:
+      value: 749999
+      source: "PROVISIONAL — carried from 2025 Ohio IT 1040 instructions p.17: $80,001-$749,999 -> $1,900"
+    tier3_amount:
+      value: 1900
+      source: "PROVISIONAL — carried from 2025 Ohio IT 1040 instructions p.17: $750,000 or greater -> $0"
+  business_income_deduction:
+    # PROVISIONAL — carried forward from the TY2025/TY2024 IT 1040 booklets;
+    # the 2026 ITES worksheet does not restate the BID cap dollar figure
+    # (its line flow has no separate BID line). Confirm against the real
+    # TY2026 IT 1040 instruction booklet once published.
+    cap:
+      value: 250000
+      source: "PROVISIONAL — carried from 2025 Ohio IT 1040 instructions p.11: 'deduct the first $250,000 ($125,000 for married separate filers) of their business income'"
+    cap_married_filing_separately:
+      value: 125000
+      source: "PROVISIONAL — carried from 2025 Ohio IT 1040 instructions p.11"
+    flat_rate_on_remainder:
+      value: "0.03"
+      source: "2026 ITES worksheet: 'Multiply the business income portion of line 5 by 3%' — CONFIRMED unchanged for TY2026"
+  estimated_tax:
+    # OH IT 1040ES / ORC 5747.09 own safe harbor — telos-ops#21. CONFIRMED
+    # from the real, currently-published 2026 ITES worksheet + instructions
+    # (statutory percentages/threshold, not inflation-adjusted; unchanged
+    # from ORC 5747.09 as codified).
+    safe_harbor_current_year_pct:
+      value: "0.90"
+      source: "2026 ITES worksheet line 10: 'Multiply line 8 by 90% (.90)'; ORC 5747.09(A)(4)(a) (statutory 90% of current-year tax liability)"
+    safe_harbor_prior_year_pct:
+      value: "1.00"
+      source: "2026 ITES worksheet lines 9/11: 'Enter the lesser of line 9 [2025 Ohio income tax liability] or line 10'; ORC 5747.09(A)(4)(b) (statutory 100% of prior-year tax liability). No 'no prior-year return filed' figure applies if a prior-year OH return was not filed — the worksheet says to use the 90% amount (line 10) instead."
+    de_minimis_threshold:
+      value: 500
+      source: "2026 ITES worksheet instructions: 'You should make estimated payments for tax year 2026 if your estimated Ohio tax liability ... less Ohio withholding is more than $500'; ORC 5747.09(B) (statutory $500 de minimis threshold)"
+    quarterly_installment_pct:
+      value: "0.25"
+      source: "2026 ITES worksheet line 14: 'Your quarterly estimated payment. Multiply line 13 by 25% (.25)' (equal-quarters mechanics; ORC 5747.09(C) states the equivalent cumulative 22.5%/45%/67.5%/90% schedule by the four statutory due dates)"

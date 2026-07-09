@@ -11,7 +11,13 @@ from pathlib import Path
 
 import pytest
 
-from telos.contracts import QuarterPaymentStatus, tax_projection_json_schema
+from telos.contracts import (
+    LossRegime,
+    QuarterPaymentStatus,
+    RentalArrangement,
+    ScheduleEWorksheet,
+    tax_projection_json_schema,
+)
 from telos.models import W2, FilingStatus
 from telos.params import load_pack
 from telos.planning import EstimatedPaymentMade, PlanningScenario, project
@@ -20,6 +26,24 @@ D = Decimal
 ROOT = Path(__file__).parent.parent
 PACK_2026 = load_pack(ROOT / "params" / "ty2026.yaml")
 PACK_2025 = load_pack(ROOT / "params" / "ty2025.yaml")
+OH_PACK_2026 = load_pack(ROOT / "params" / "ty2026_oh.yaml")
+WA_PACK_2025 = load_pack(ROOT / "params" / "ty2025_wa.yaml")
+
+
+def duplex_schedule_e(tax_year=2026, net_income=None):
+    """Synthetic Ohio-source rental duplex (telos-ops#21)."""
+    return ScheduleEWorksheet(
+        tax_year=tax_year,
+        arrangements=(
+            RentalArrangement(
+                arrangement_id="oh-duplex",
+                property_name="Columbus duplex",
+                regime=LossRegime.SECTION_469_PASSIVE,
+                net_income_post_caps=net_income if net_income is not None else D(4_000),
+                source="manual:synthetic-planning-scenario",
+            ),
+        ),
+    )
 
 
 def scenario(**overrides) -> PlanningScenario:
@@ -220,8 +244,12 @@ class TestCliAndReport:
         assert "Telos tax projection — TY2026" in report
         assert "Q3 due 2026-09-15" in report
         written = json.loads(out.read_text())
-        assert written["schema_version"] == "1.0.0"
+        assert written["schema_version"] == "1.1.0"
         assert written["headline"]["payment_recommended"] is True
+        # optional state sections omitted entirely when no state pack is
+        # given to the CLI — additive/backward-compatible per schema 1.1.0.
+        assert written["wa"] is None
+        assert written["ohio"] is None
 
 
 class TestArtifactContract:
@@ -239,3 +267,101 @@ class TestArtifactContract:
         outcome = project(scenario(), PACK_2026)
         raw = outcome.artifact.model_dump_json()
         assert TaxProjection.model_validate_json(raw) == outcome.artifact
+
+    def test_wa_and_ohio_sections_absent_by_default(self):
+        """Extension point is opt-in: omitting wa_pack/oh_pack leaves both
+        sections None — no behavior change for existing callers (telos-ops#21)."""
+        outcome = project(scenario(), PACK_2026)
+        assert outcome.artifact.wa is None
+        assert outcome.artifact.ohio is None
+
+
+class TestStateExtensionSections:
+    """telos-ops#21: WA excise exposure + OH nonresident liability, wired
+    through the SAME planning scenario -> projection path as the federal
+    numbers, each with citations even when the answer is negative."""
+
+    def test_wa_excise_not_applicable_shows_computation(self):
+        """Small LT gain, well under WA's $278,000 standard deduction —
+        NOT applicable, but the computation is still shown (checkers cite
+        their work)."""
+        outcome = project(
+            scenario(lt_net_gain=D(50_000)), PACK_2026, wa_pack=WA_PACK_2025
+        )
+        wa = outcome.artifact.wa
+        assert wa is not None
+        assert wa.applicable is False
+        assert wa.tax == D(0)
+        assert wa.wa_allocable_long_term_gain == D(50_000)
+        assert "278000" in wa.citations[0] or any("278000" in c for c in wa.citations)
+        assert wa.message  # non-empty: the determination + computation
+
+    def test_wa_excise_applicable_computes_tax(self):
+        """300,000 LT gain (below the AMT-screen trigger zone): taxable
+        22,000 -> 7% = 1,540."""
+        outcome = project(
+            scenario(lt_net_gain=D(300_000)), PACK_2026, wa_pack=WA_PACK_2025
+        )
+        wa = outcome.artifact.wa
+        assert wa.applicable is True
+        assert wa.taxable_gain == D(22_000)
+        assert wa.tax == D(1_540)
+        assert wa.citations
+
+    def test_ohio_duplex_section_emits_liability_and_estimated_advisory(self):
+        outcome = project(
+            scenario(schedule_e=duplex_schedule_e()),
+            PACK_2026,
+            oh_pack=OH_PACK_2026,
+        )
+        oh = outcome.artifact.ohio
+        assert oh is not None
+        assert oh.filing_required is True
+        assert oh.net_tax >= D(0)
+        assert oh.citations
+        assert "OH net tax" in oh.message
+
+    def test_ohio_section_without_prior_year_uses_90pct_current_year(self):
+        outcome = project(
+            scenario(schedule_e=duplex_schedule_e(net_income=D(50_000))),
+            PACK_2026,
+            oh_pack=OH_PACK_2026,
+        )
+        oh = outcome.artifact.ohio
+        assert oh.required_annual_payment == round(oh.net_tax * D("0.9"))
+
+    def test_ohio_section_uses_lesser_of_prior_and_current_harbor(self):
+        outcome = project(
+            scenario(
+                schedule_e=duplex_schedule_e(net_income=D(50_000)),
+                prior_year_oh_tax=D(10),
+            ),
+            PACK_2026,
+            oh_pack=OH_PACK_2026,
+        )
+        oh = outcome.artifact.ohio
+        assert oh.required_annual_payment == D(10)
+        assert oh.estimated_payments_advisable is False  # 10 <= $500 de minimis
+
+    def test_both_sections_present_together(self):
+        """The closes-when scenario: LT gains + duplex Schedule E emits
+        BOTH state sections in one projection run."""
+        outcome = project(
+            scenario(lt_net_gain=D(300_000), schedule_e=duplex_schedule_e()),
+            PACK_2026,
+            wa_pack=WA_PACK_2025,
+            oh_pack=OH_PACK_2026,
+        )
+        assert outcome.artifact.wa is not None
+        assert outcome.artifact.ohio is not None
+        assert outcome.artifact.wa.applicable is True
+        assert outcome.artifact.ohio.filing_required is True
+
+    def test_no_schedule_e_still_emits_ohio_section_not_required(self):
+        """Opting into oh_pack without any Ohio-source income still shows
+        the determination (not required) rather than omitting the section."""
+        outcome = project(scenario(), PACK_2026, oh_pack=OH_PACK_2026)
+        oh = outcome.artifact.ohio
+        assert oh is not None
+        assert oh.filing_required is False
+        assert oh.net_tax == D(0)

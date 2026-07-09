@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "telos"
-version = "0.1.0"
+version = "0.2.0"
 description = "telos (Greek τέλος — completion, purpose; the ancient word for a tax): a deterministic personal tax engine. LLM document ingestion in front, pure-code computation in the middle, official-form output at the back."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -25,6 +25,10 @@ classifiers = [
 dependencies = [
     "pydantic>=2.0",
     "pyyaml>=6.0",
+    # Ingestion layer (src/telos/ingest/) — Claude vision + tool-use extraction.
+    # Imported lazily so the deterministic engine never pulls it in at import
+    # time; a hard dep so CI and `pip install -e .` exercise the ingest path.
+    "anthropic>=0.40",
 ]
 
 [project.urls]
@@ -36,13 +40,15 @@ dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
     "ruff>=0.6",
+    # Synthetic-fixture generation for the ingestion tests (fake W-2 PDFs).
+    "reportlab>=4.0",
 ]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-telos = ["py.typed"]
+telos = ["py.typed", "ingest/prompts/*.txt.example"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

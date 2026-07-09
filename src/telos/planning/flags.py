@@ -7,9 +7,13 @@ consulted anywhere (``as_of`` is scenario data).
 
 The headline's recommended amount is catch-up semantics: every overdue
 installment's shortfall plus the next upcoming installment's shortfall. It
-does NOT compute the §6654 underpayment penalty itself (Form 2210 Part III /
-Schedule AI territory — a tracked follow-up), it answers the planning
-question: what should be paid now to stop the hole from deepening.
+answers the planning question — what should be paid now to stop the hole
+from deepening — and does NOT itself run the §6654 underpayment penalty.
+That penalty (Form 2210 Part III) and the Schedule AI annualized-income
+method now live in ``telos.engine.form2210`` and
+``telos.engine.estimated`` (telos-ops#20); a caller wanting the dollar
+penalty feeds the per-installment underpayments to
+``telos.engine.form2210.compute_form2210_penalty``.
 """
 
 from __future__ import annotations
