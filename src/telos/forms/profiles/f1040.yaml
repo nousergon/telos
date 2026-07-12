@@ -1,0 +1,32 @@
+schema_version: "1.0.0"
+form_id: f1040
+title: "Form 1040 (U.S. Individual Income Tax Return)"
+template_filename: f1040.pdf
+filing_order: 1
+
+# --- field_map: DELIBERATELY EMPTY until verified -----------------------------
+# The f1040 AcroForm has 229 fields with opaque positional names
+# (topmostSubform[0].Page1[0].f1_11[0], ...) and ZERO /TU tooltips, so which
+# field is which 1040 line CANNOT be read from the PDF. A read-back test proves a
+# value lands in a named field, never that the field is the correct box, and a
+# mis-mapped dollar amount is a silent, high-stakes defect on a form mailed to
+# the IRS.
+#
+# Populating this map is the one piece that needs a human-in-the-loop
+# confirmation (or a validated geometric auto-mapper) — see forms/README.md and
+# telos-ops#10. Until then this profile stays verified: false and any
+# filing-grade use raises UnverifiedProfileError.
+#
+# Keys, once populated, are the engine's own line labels (Form1040Result.lines:
+# "1a", "2b", "3a", "3b", "7", "8", "9", "11", "12", "13", "15", "16", ...);
+# values are the AcroForm field names from `describe_fields(template)`.
+field_map: {}
+checkbox_map: {}
+
+verified: false
+provenance: >-
+  Unverified. field_map intentionally empty: the f1040 AcroForm carries no
+  semantic field labels, so the map must be established and confirmed against the
+  rendered form (telos-ops#10). Blank template committed under forms/templates/;
+  the fill/package/introspect machinery is validated on a synthetic AcroForm
+  fixture and on a mechanical round-trip against this real template.

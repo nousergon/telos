@@ -8,7 +8,12 @@ inputs/
 out/
 output/
 *.pdf
-!forms/templates/**/*.pdf   # blank official IRS templates only (public-domain US gov works)
+# blank official IRS templates only (public-domain US gov works) — the comment
+# MUST be on its own line: git .gitignore has no inline comments, so a trailing
+# "# ..." on the negation below made it a literal (never-matching) pattern and
+# silently kept the templates ignored (telos-ops#10).
+!forms/templates/**/*.pdf
+!forms/templates/*.pdf
 *.p12
 *.key
 
