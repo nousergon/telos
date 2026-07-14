@@ -1,32 +1,66 @@
 schema_version: "1.0.0"
 form_id: f1040
-title: "Form 1040 (U.S. Individual Income Tax Return)"
+title: "Form 1040 (2025) — U.S. Individual Income Tax Return"
 template_filename: f1040.pdf
 filing_order: 1
 
-# --- field_map: DELIBERATELY EMPTY until verified -----------------------------
+# --- field_map: hand-authored + visually confirmed (telos-ops#10 Option A, ------
+# Brian's 2026-07-13 Operator decision via the console Decision Queue) ----------
+#
 # The f1040 AcroForm has 229 fields with opaque positional names
-# (topmostSubform[0].Page1[0].f1_11[0], ...) and ZERO /TU tooltips, so which
-# field is which 1040 line CANNOT be read from the PDF. A read-back test proves a
-# value lands in a named field, never that the field is the correct box, and a
-# mis-mapped dollar amount is a silent, high-stakes defect on a form mailed to
-# the IRS.
+# (topmostSubform[0].Page1[0].f1_11[0], ...) and ZERO /TU tooltips, so the map
+# could not be read from the PDF metadata. Established by rendering both pages
+# at 200dpi, overlaying every field's widget rect on the printed form, and
+# visually confirming each mapped field sits in the correct printed box —
+# `describe_fields()`'s nearest-text heuristic was used only as a starting
+# candidate list, never trusted directly (it repeatedly picked up unrelated
+# header/OMB text, e.g. for f1_02/f1_05/f1_13 — those are NOT mapped here for
+# exactly that reason: no engine line corresponds to that region of the form).
 #
-# Populating this map is the one piece that needs a human-in-the-loop
-# confirmation (or a validated geometric auto-mapper) — see forms/README.md and
-# telos-ops#10. Until then this profile stays verified: false and any
-# filing-grade use raises UnverifiedProfileError.
+# Keys are the engine's own line labels (Form1040Result.lines: "1a", "2b",
+# "3a", "3b", "7", "8", "9", "11", "12", "13", "15", "16", "22", "25", "26"),
+# plus three keys for the Form1040Result attributes that live outside `.lines`:
+# "24" (total_tax), "33" (total_payments), and the balance split "34"/"37"
+# (refund vs. amount-owed — same signed `balance_due` value, opposite sign
+# convention; a caller picks exactly one of the two per the sign, never both,
+# since a single filing is never simultaneously a refund and a balance due).
 #
-# Keys, once populated, are the engine's own line labels (Form1040Result.lines:
-# "1a", "2b", "3a", "3b", "7", "8", "9", "11", "12", "13", "15", "16", ...);
-# values are the AcroForm field names from `describe_fields(template)`.
-field_map: {}
+# Only fields with a real engine-computed value are mapped. Real 1040 lines the
+# engine does not yet model (1b-1h, 2a, 4a/b, 5a/b, 6a/b, 12a-d checkboxes,
+# 17-21 Schedule 2/3 credits, 27a EIC, 28-32 other refundable credits, 35b-36,
+# 38 est. tax penalty) are deliberately left unmapped rather than guessed.
+field_map:
+  # --- Page 1 (Income) ---
+  "1a": topmostSubform[0].Page1[0].f1_47[0]     # line 1a  Total W-2 box 1 wages
+  "2b": topmostSubform[0].Page1[0].f1_59[0]     # line 2b  Taxable interest
+  "3a": topmostSubform[0].Page1[0].f1_60[0]     # line 3a  Qualified dividends
+  "3b": topmostSubform[0].Page1[0].f1_61[0]     # line 3b  Ordinary dividends
+  "7":  topmostSubform[0].Page1[0].f1_70[0]     # line 7a  Capital gain or (loss)
+  "8":  topmostSubform[0].Page1[0].f1_72[0]     # line 8   Additional income (Sch 1)
+  "9":  topmostSubform[0].Page1[0].f1_73[0]     # line 9   Total income
+  "11": topmostSubform[0].Page1[0].f1_75[0]     # line 11a Adjusted gross income
+  # --- Page 2 (Tax and Credits / Payments) ---
+  "11b": topmostSubform[0].Page2[0].f2_01[0]    # line 11b AGI carried forward (dup of "11")
+  "12": topmostSubform[0].Page2[0].f2_02[0]     # line 12e Standard/itemized deduction
+  "13": topmostSubform[0].Page2[0].f2_03[0]     # line 13a QBI deduction
+  "15": topmostSubform[0].Page2[0].f2_06[0]     # line 15  Taxable income
+  "16": topmostSubform[0].Page2[0].f2_08[0]     # line 16  Tax
+  "22": topmostSubform[0].Page2[0].f2_14[0]     # line 22  Tax after credits
+  "24": topmostSubform[0].Page2[0].f2_16[0]     # line 24  Total tax (Form1040Result.total_tax)
+  "25": topmostSubform[0].Page2[0].f2_20[0]     # line 25d Total federal income tax withheld
+  "26": topmostSubform[0].Page2[0].f2_21[0]     # line 26  2025 estimated tax payments
+  "33": topmostSubform[0].Page2[0].f2_29[0]     # line 33  Total payments (Form1040Result.total_payments)
+  "34": topmostSubform[0].Page2[0].f2_30[0]     # line 34  Overpaid (use iff balance_due < 0)
+  "37": topmostSubform[0].Page2[0].f2_35[0]     # line 37  Amount you owe (use iff balance_due > 0)
 checkbox_map: {}
 
-verified: false
+verified: true
 provenance: >-
-  Unverified. field_map intentionally empty: the f1040 AcroForm carries no
-  semantic field labels, so the map must be established and confirmed against the
-  rendered form (telos-ops#10). Blank template committed under forms/templates/;
-  the fill/package/introspect machinery is validated on a synthetic AcroForm
-  fixture and on a mechanical round-trip against this real template.
+  Verified 2026-07-14 per Brian's 2026-07-13 Operator decision (Option A,
+  telos-ops#10): each mapped field's widget rect was rendered against the
+  actual printed f1040.pdf page (200dpi overlay, both pages) and confirmed by
+  eye to sit in the stated line's box before being added to this map. Fields
+  the engine does not yet compute (1b-1h, 2a, 4-6, 12a-d, 17-21, 27a-32, 35b-36,
+  38) are intentionally left unmapped — see the field_map comment above.
+  checkbox_map stays empty: filing-status/dependent checkboxes are a distinct,
+  unstarted scope (no engine output drives them yet), not part of this decision.

@@ -22,7 +22,7 @@ print-and-mail package.
 | `introspect.py` | dump each field's name/type/rect/**nearest printed label** — the mapping aid |
 | `profiles/*.yaml` | committed per-form profiles |
 
-## The one unsolved piece: the verified field map
+## The verified field map
 
 IRS 1040-family AcroForms have **opaque positional field names**
 (`topmostSubform[0].Page1[0].f1_11[0]`) and **no `/TU` tooltips** (verified:
@@ -32,29 +32,29 @@ field; it never proves the field is the **semantically correct box**. A
 mis-mapped dollar amount is a silent, high-stakes defect on a document mailed to
 the IRS.
 
-Therefore every profile ships `verified: false` with an **empty `field_map`**,
-and `require_verified()` refuses filing-grade use until the map is confirmed. The
-machinery is fully validated (synthetic AcroForm fixture + a mechanical
-round-trip on the real `f1040.pdf`); only the map values are outstanding.
+Every profile therefore ships `verified: false` with an **empty `field_map`**
+until the map is established and confirmed against the rendered form;
+`require_verified()` refuses filing-grade use before that.
 
-### DECISION NEEDED (telos-ops#10) — how to establish the verified map
+### RESOLVED (telos-ops#10, Brian's 2026-07-13 Operator decision: Option A)
 
-The issue pre-commits to the AcroForm approach ("pypdf field mapping per form"),
-so the remaining fork is *how the map is produced and verified*:
+`f1040.yaml` is now hand-authored + verified: each mapped field's widget rect
+was rendered against the actual printed page (200dpi overlay, both pages) and
+confirmed by eye to sit in the stated line's box — `describe_fields()`'s
+nearest-text heuristic was used only as a starting candidate list, never
+trusted directly (it repeatedly latched onto unrelated header/OMB text for
+several fields). Only engine-computed lines are mapped; real 1040 lines the
+engine doesn't yet model are left unmapped rather than guessed. See the
+`field_map` comments in `profiles/f1040.yaml` for the full per-field rationale.
 
-- **Option A — hand-authored map, human-confirmed once (recommended).** Run
-  `describe_fields(template)` to get every field with its nearest printed label,
-  hand-author `field_map` from that, and visually confirm each entry against the
-  rendered form once. Durable thereafter; this is what commercial tax software
-  does. `introspect.py` already does ~90% of the legwork.
-- **Option B — geometric label-proximity auto-mapper.** Promote the
-  `nearest_text` heuristic into a validated subsystem that assigns fields to line
-  labels by coordinates. Removes the hand step but is itself a design-bearing
-  component whose correctness must be validated (multi-column layout, checkboxes,
-  continuation lines, ~7 forms).
+**Option B (geometric label-proximity auto-mapper)** remains a possible future
+upgrade if/when more forms are added — promoting `nearest_text` into a
+validated subsystem would remove the hand step, but is itself a design-bearing
+component (multi-column layout, checkboxes, continuation lines, ~7 forms) that
+would need its own validation pass. Not needed for f1040.
 
-Populating `field_map` (either way) is a **data-only** change to the YAML — no
-code rework — because the map is a pure profile artifact.
+Populating `field_map` for a new form is a **data-only** change to its YAML —
+no code rework — because the map is a pure profile artifact.
 
 ## Adding a form
 

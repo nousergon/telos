@@ -6,7 +6,6 @@ import pytest
 
 from telos.forms.profile import (
     FormProfile,
-    UnverifiedProfileError,
     load_profile,
     profile_from_dict,
 )
@@ -17,14 +16,14 @@ def test_load_committed_f1040_profile() -> None:
     assert profile.form_id == "f1040"
     assert profile.template_filename == "f1040.pdf"
     assert profile.filing_order == 1
-    # Shipped intentionally unverified with an empty map (see telos-ops#10).
-    assert profile.verified is False
-    assert profile.field_map == {}
+    # Hand-authored + visually confirmed against the rendered form (telos-ops#10
+    # Option A, ratified by Brian 2026-07-13) — no longer the empty stub.
+    assert profile.verified is True
+    assert profile.field_map
 
 
-def test_committed_profile_gate_raises() -> None:
-    with pytest.raises(UnverifiedProfileError):
-        load_profile("f1040").require_verified()
+def test_committed_profile_gate_passes() -> None:
+    load_profile("f1040").require_verified()  # no raise: map is verified
 
 
 def test_verified_profile_gate_passes() -> None:
