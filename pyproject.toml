@@ -27,7 +27,7 @@ dependencies = [
     "pyyaml>=6.0",
     # Output layer (src/telos/forms/) — fill official IRS AcroForm PDFs. Core to
     # the "official-form output at the back" of the pipeline, so a hard dep.
-    "pypdf>=5.0",
+    "pypdf>=6.14.2",
     # Ingestion layer (src/telos/ingest/) — Claude vision + tool-use extraction.
     # Imported lazily so the deterministic engine never pulls it in at import
     # time; a hard dep so CI and `pip install -e .` exercise the ingest path.
