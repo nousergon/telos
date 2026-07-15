@@ -57,3 +57,50 @@ export type MetronTaxSummary = {
   unrealized_lt: number | null;
   harvestable_loss: number | null;
 };
+
+// NOTE: not yet produced by the backend projection artifact — these types
+// describe the shape consumed by the (currently unwired) income-sources,
+// deduction, and what-if panels. See config#2551.
+
+export type ScheduleEPropertyItem = {
+  arrangement_id: string;
+  property_name: string;
+  net_income: string;
+  depreciation_taken: string;
+  suspended_loss: string;
+  regime: string;
+};
+
+export type IncomeSourceDetail = {
+  total: string;
+  wages: string;
+  interest: string;
+  ordinary_dividends: string;
+  qualified_dividends: string;
+  net_capital_gain: string;
+  schedule_e_total: string;
+  other_income_total: string;
+  schedule_e_properties?: ScheduleEPropertyItem[] | null;
+};
+
+export type AdjustmentItem = {
+  name: string;
+  amount: string;
+};
+
+export type AdjustmentsDetail = {
+  total: string;
+  items: AdjustmentItem[];
+};
+
+export type DeductionDetail = {
+  type: "standard" | "itemized";
+  standard_amount: string;
+  itemized_total: string;
+  qbi: string;
+  medical: string;
+  salt: string;
+  mortgage_interest: string;
+  charitable: string;
+  other_itemized: string;
+};
