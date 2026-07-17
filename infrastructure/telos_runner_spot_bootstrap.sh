@@ -301,9 +301,20 @@ if [ -n "${EXTRA_PYTHON_VERSIONS:-}" ]; then
       ln -sf "$PYBIN" "${EXTRA_PY_CACHE_DIR}/bin/python${PYVER}"
       ln -sf "$PYBIN" "${EXTRA_PY_CACHE_DIR}/bin/python3"
       ln -sf "$PYBIN" "${EXTRA_PY_CACHE_DIR}/bin/python"
+      # uv-installed interpreters do NOT ship pip as a sibling binary the way
+      # dnf-installed ones do (uv's own philosophy is "use uv, not pip") —
+      # confirmed live 2026-07-17: setup-python found the cached interpreter
+      # fine, then `pip install` failed with "pip: command not found".
+      # ensurepip is a CPython stdlib module bundled with every build
+      # (including uv's), and creates real pip console-script binaries
+      # alongside the interpreter it's run against.
+      "$PYBIN" -m ensurepip --default-pip >/dev/null 2>&1 \
+        || log "WARN: ensurepip failed for ${EXTRA_PY_FULL}"
       EXTRA_PIPBIN="$(dirname "$PYBIN")/pip3"
+      [ -x "$EXTRA_PIPBIN" ] || EXTRA_PIPBIN="$(dirname "$PYBIN")/pip${PYVER}"
       [ -x "$EXTRA_PIPBIN" ] && ln -sf "$EXTRA_PIPBIN" "${EXTRA_PY_CACHE_DIR}/bin/pip3"
       [ -x "$EXTRA_PIPBIN" ] && ln -sf "$EXTRA_PIPBIN" "${EXTRA_PY_CACHE_DIR}/bin/pip"
+      [ -x "$EXTRA_PIPBIN" ] || log "WARN: no pip binary found for ${EXTRA_PY_FULL} after ensurepip"
       touch "${TOOL_CACHE_DIR}/Python/${EXTRA_PY_FULL}/x64.complete"
       log "pre-populated tool cache for python ${EXTRA_PY_FULL} (requested ${PYVER}) via uv"
     done
