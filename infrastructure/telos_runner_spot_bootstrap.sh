@@ -398,8 +398,19 @@ log "starting run.sh with JIT config (config#2653) — name=${RUNNER_NAME} job_i
 # not found`). Job steps inherit run.sh's baseline PATH (layered with
 # whatever setup-python etc. append via GITHUB_PATH later), so this must be
 # set here, not per-step.
+# PIP_USER=1 (2026-07-17): forces every pip install during the job to use
+# the --user scheme regardless of whether it COULD write directly. Needed
+# for uv-managed interpreters specifically — since the run user OWNS a
+# uv-installed python's own site-packages (unlike dnf-installed 3.12's
+# root-owned /usr), pip does a regular (non-user) install there and lands
+# console scripts (pytest, etc.) inside uv's own managed directory tree,
+# which is never added to PATH — confirmed live as a second-order failure
+# after fixing the externally-managed-environment block above. Forcing
+# --user normalizes ALL interpreters (dnf- and uv-installed alike) onto
+# the same ~/.local/bin PATH entry already set up below.
 runuser -u "$TELOS_RUNNER_USER" -- /usr/bin/env HOME="$RUN_USER_HOME" \
   RUNNER_TOOL_CACHE="$TOOL_CACHE_DIR" AGENT_TOOLSDIRECTORY="$TOOL_CACHE_DIR" \
+  PIP_USER=1 \
   PATH="${RUN_USER_HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin" \
   "${RUNNER_DIR}/run.sh" --jitconfig "$JIT_CONFIG"
 RUNNER_EXIT=$?
