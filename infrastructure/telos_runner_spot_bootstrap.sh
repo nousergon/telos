@@ -318,6 +318,19 @@ if [ -n "${EXTRA_PYTHON_VERSIONS:-}" ]; then
       # anything relative to it.
       PYBIN="$(readlink -f "$PYBIN")"
       EXTRA_PY_FULL="$(runuser -u "$TELOS_RUNNER_USER" -- "$PYBIN" -c 'import sys; print(".".join(map(str, sys.version_info[:3])))')"
+      # Remove uv's PEP 668 EXTERNALLY-MANAGED marker from this interpreter.
+      # --break-system-packages (used below for OUR OWN get-pip.py call) only
+      # covers pip invocations we control — confirmed live 2026-07-17 that
+      # the WORKFLOW's own `pip install -e ".[dev]"` step (which we can't
+      # modify — it's the repo's actual test command) hit the identical
+      # "externally-managed-environment" refusal, since the marker file
+      # itself is still present after get-pip.py runs. Since this is a
+      # dedicated, ephemeral, single-purpose CI box — not a shared system
+      # Python PEP 668 exists to protect — removing the marker so ALL pip
+      # calls behave normally is the correct fix, not threading
+      # --break-system-packages through every repo's own workflow commands.
+      EXTRA_PY_PREFIX="$(runuser -u "$TELOS_RUNNER_USER" -- "$PYBIN" -c 'import sys; print(sys.prefix)')"
+      find "$EXTRA_PY_PREFIX" -name EXTERNALLY-MANAGED -delete 2>/dev/null || true
       EXTRA_PY_CACHE_DIR="${TOOL_CACHE_DIR}/Python/${EXTRA_PY_FULL}/x64"
       mkdir -p "${EXTRA_PY_CACHE_DIR}/bin"
       ln -sf "$PYBIN" "${EXTRA_PY_CACHE_DIR}/bin/python${PYVER}"
