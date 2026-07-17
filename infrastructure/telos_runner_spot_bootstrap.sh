@@ -45,6 +45,10 @@
 #   instance's own IAM role — self-hosted runners support that unchanged.
 set -uo pipefail
 
+# Repo-specific toolchain needs (2026-07-17, multi-version Python/Node fix).
+EXTRA_PYTHON_VERSIONS="${EXTRA_PYTHON_VERSIONS:-3.11 3.13 3.14}"
+NEEDS_NODE_VERSIONS="${NEEDS_NODE_VERSIONS:-20}"
+
 TELOS_RUNNER_JOB_ID=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -269,6 +273,68 @@ ln -sf python3.12 "${PY_CACHE_DIR}/bin/python"
 [ -e "${PY_CACHE_DIR}/bin/pip3.12" ] && ln -sf pip3.12 "${PY_CACHE_DIR}/bin/pip"
 touch "${TOOL_CACHE_DIR}/Python/${PY_FULL_VERSION}/x64.complete"
 log "pre-populated tool cache for python ${PY_FULL_VERSION} at ${PY_CACHE_DIR}"
+
+# ── Multi-version Python tool-cache pre-population (2026-07-17) ────────────
+# Extends the single-version fix above to matrix/multi-toolchain jobs. Uses
+# uv's own portable Python distribution (python-build-standalone) — NOT dnf
+# — because AL2023's dnf repos don't reliably carry every version a repo's
+# CI matrix needs (3.9/3.10/3.11/3.13/3.14 alongside the dnf-default 3.12),
+# and python-build-standalone builds are statically-linked/relocatable,
+# sidestepping distro package availability entirely. EXTRA_PYTHON_VERSIONS
+# is a space-separated env var (e.g. "3.9 3.10 3.11 3.13 3.14"); empty/unset
+# is a clean no-op for repos that only need the dnf-default 3.12.
+if [ -n "${EXTRA_PYTHON_VERSIONS:-}" ]; then
+  log "installing uv for portable multi-version Python (${EXTRA_PYTHON_VERSIONS})..."
+  curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh >/dev/null 2>&1 \
+    || log "WARN: uv install failed — extra python versions will be unavailable"
+  if command -v uv >/dev/null 2>&1; then
+    for PYVER in $EXTRA_PYTHON_VERSIONS; do
+      uv python install "$PYVER" >/dev/null 2>&1 || { log "WARN: uv python install ${PYVER} failed"; continue; }
+      PYBIN="$(uv python find "$PYVER" 2>/dev/null)"
+      if [ -z "$PYBIN" ] || [ ! -x "$PYBIN" ]; then
+        log "WARN: uv could not locate an installed interpreter for ${PYVER}"
+        continue
+      fi
+      EXTRA_PY_FULL="$("$PYBIN" -c 'import sys; print(".".join(map(str, sys.version_info[:3])))')"
+      EXTRA_PY_CACHE_DIR="${TOOL_CACHE_DIR}/Python/${EXTRA_PY_FULL}/x64"
+      mkdir -p "${EXTRA_PY_CACHE_DIR}/bin"
+      ln -sf "$PYBIN" "${EXTRA_PY_CACHE_DIR}/bin/python${PYVER}"
+      ln -sf "$PYBIN" "${EXTRA_PY_CACHE_DIR}/bin/python3"
+      ln -sf "$PYBIN" "${EXTRA_PY_CACHE_DIR}/bin/python"
+      EXTRA_PIPBIN="$(dirname "$PYBIN")/pip3"
+      [ -x "$EXTRA_PIPBIN" ] && ln -sf "$EXTRA_PIPBIN" "${EXTRA_PY_CACHE_DIR}/bin/pip3"
+      [ -x "$EXTRA_PIPBIN" ] && ln -sf "$EXTRA_PIPBIN" "${EXTRA_PY_CACHE_DIR}/bin/pip"
+      touch "${TOOL_CACHE_DIR}/Python/${EXTRA_PY_FULL}/x64.complete"
+      log "pre-populated tool cache for python ${EXTRA_PY_FULL} (requested ${PYVER}) via uv"
+    done
+  fi
+fi
+
+# ── Node.js tool-cache pre-population (same mechanism as Python above,
+# 2026-07-17) ────────────────────────────────────────────────────────────
+# NEEDS_NODE_VERSIONS is a space-separated env var of major versions this
+# repo's CI needs (e.g. "20"); empty/unset is a clean no-op.
+if [ -n "${NEEDS_NODE_VERSIONS:-}" ]; then
+  log "installing Node.js (${NEEDS_NODE_VERSIONS})..."
+  for NODEMAJ in $NEEDS_NODE_VERSIONS; do
+    dnf install -y -q "nodejs${NODEMAJ}" >/dev/null 2>&1 \
+      || dnf install -y -q nodejs >/dev/null 2>&1 \
+      || log "WARN: nodejs${NODEMAJ} dnf install failed"
+    if command -v node >/dev/null 2>&1; then
+      NODE_FULL="$(node --version | sed 's/^v//')"
+      NODE_CACHE_DIR="${TOOL_CACHE_DIR}/node/${NODE_FULL}/x64"
+      mkdir -p "${NODE_CACHE_DIR}/bin"
+      for bin in node npm npx; do
+        NODEBIN="$(command -v "$bin" 2>/dev/null)"
+        [ -n "$NODEBIN" ] && ln -sf "$NODEBIN" "${NODE_CACHE_DIR}/bin/${bin}"
+      done
+      touch "${TOOL_CACHE_DIR}/node/${NODE_FULL}/x64.complete"
+      log "pre-populated tool cache for node ${NODE_FULL} (requested major ${NODEMAJ})"
+    else
+      log "WARN: node binary not found after install attempt for major ${NODEMAJ}"
+    fi
+  done
+fi
 
 chown -R "${TELOS_RUNNER_USER}:${TELOS_RUNNER_USER}" "$RUNNER_DIR"
 
