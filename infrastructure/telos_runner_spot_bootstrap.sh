@@ -295,6 +295,16 @@ if [ -n "${EXTRA_PYTHON_VERSIONS:-}" ]; then
         log "WARN: uv could not locate an installed interpreter for ${PYVER}"
         continue
       fi
+      # `uv python find` returns a path through uv's abbreviated major.minor
+      # alias directory (e.g. cpython-3.11-...), but get-pip.py installs
+      # pip relative to sys.executable's RESOLVED path, which lands in the
+      # full-version directory (cpython-3.11.15-...) — a DIFFERENT real
+      # directory, confirmed live 2026-07-17 (setup-python found the
+      # interpreter, get-pip.py reported success, yet the pip symlink still
+      # pointed nowhere because dirname on the alias path never matched
+      # where pip actually landed). Resolve the real path before computing
+      # anything relative to it.
+      PYBIN="$(readlink -f "$PYBIN")"
       EXTRA_PY_FULL="$("$PYBIN" -c 'import sys; print(".".join(map(str, sys.version_info[:3])))')"
       EXTRA_PY_CACHE_DIR="${TOOL_CACHE_DIR}/Python/${EXTRA_PY_FULL}/x64"
       mkdir -p "${EXTRA_PY_CACHE_DIR}/bin"
