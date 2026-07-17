@@ -287,10 +287,22 @@ if [ -n "${EXTRA_PYTHON_VERSIONS:-}" ]; then
   log "installing uv for portable multi-version Python (${EXTRA_PYTHON_VERSIONS})..."
   curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh >/dev/null 2>&1 \
     || log "WARN: uv install failed — extra python versions will be unavailable"
+  # CRITICAL: everything below runs AS the non-root run user, not root.
+  # Confirmed live 2026-07-17 (3 failed CI attempts before finding this):
+  # /root is mode 750 (dr-xr-x---) on this AMI — the non-root user that
+  # actually executes GHA job steps has ZERO access to anything under
+  # /root, including via a symlink pointing there (the tool-cache symlink
+  # trick alone is not enough; the symlink TARGET must also be reachable).
+  # `uv python install` + get-pip.py run as root landed python/pip under
+  # /root/.local/share/uv/... — permanently inaccessible to the job.
+  # Running the same commands via runuser installs everything under
+  # ${RUN_USER_HOME}/.local/share/uv/... instead, which the run user owns.
   if command -v uv >/dev/null 2>&1; then
     for PYVER in $EXTRA_PYTHON_VERSIONS; do
-      uv python install "$PYVER" >/dev/null 2>&1 || { log "WARN: uv python install ${PYVER} failed"; continue; }
-      PYBIN="$(uv python find "$PYVER" 2>/dev/null)"
+      runuser -u "$TELOS_RUNNER_USER" -- env HOME="$RUN_USER_HOME" PATH="/usr/local/bin:${PATH}" \
+        uv python install "$PYVER" >/dev/null 2>&1 || { log "WARN: uv python install ${PYVER} failed"; continue; }
+      PYBIN="$(runuser -u "$TELOS_RUNNER_USER" -- env HOME="$RUN_USER_HOME" PATH="/usr/local/bin:${PATH}" \
+        uv python find "$PYVER" 2>/dev/null)"
       if [ -z "$PYBIN" ] || [ ! -x "$PYBIN" ]; then
         log "WARN: uv could not locate an installed interpreter for ${PYVER}"
         continue
@@ -305,7 +317,7 @@ if [ -n "${EXTRA_PYTHON_VERSIONS:-}" ]; then
       # where pip actually landed). Resolve the real path before computing
       # anything relative to it.
       PYBIN="$(readlink -f "$PYBIN")"
-      EXTRA_PY_FULL="$("$PYBIN" -c 'import sys; print(".".join(map(str, sys.version_info[:3])))')"
+      EXTRA_PY_FULL="$(runuser -u "$TELOS_RUNNER_USER" -- "$PYBIN" -c 'import sys; print(".".join(map(str, sys.version_info[:3])))')"
       EXTRA_PY_CACHE_DIR="${TOOL_CACHE_DIR}/Python/${EXTRA_PY_FULL}/x64"
       mkdir -p "${EXTRA_PY_CACHE_DIR}/bin"
       ln -sf "$PYBIN" "${EXTRA_PY_CACHE_DIR}/bin/python${PYVER}"
@@ -322,7 +334,8 @@ if [ -n "${EXTRA_PYTHON_VERSIONS:-}" ]; then
       # which is the correct override here: this is a dedicated, ephemeral,
       # single-purpose CI box, not a shared system Python PEP 668 protects.
       curl -sS https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip-${PYVER}.py \
-        && "$PYBIN" /tmp/get-pip-${PYVER}.py --break-system-packages --quiet \
+        && chown "${TELOS_RUNNER_USER}:${TELOS_RUNNER_USER}" /tmp/get-pip-${PYVER}.py \
+        && runuser -u "$TELOS_RUNNER_USER" -- "$PYBIN" /tmp/get-pip-${PYVER}.py --break-system-packages --quiet \
         || log "WARN: get-pip.py failed for ${EXTRA_PY_FULL}"
       EXTRA_PIPBIN="$(dirname "$PYBIN")/pip3"
       [ -x "$EXTRA_PIPBIN" ] || EXTRA_PIPBIN="$(dirname "$PYBIN")/pip${PYVER}"
