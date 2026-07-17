@@ -134,7 +134,7 @@ fi
 # supplied later to config.sh) ─────────────────────────────────────────────────
 IMDS_TOKEN="$(curl -sS -X PUT -H 'X-aws-ec2-metadata-token-ttl-seconds: 21600' http://169.254.169.254/latest/api/token 2>/dev/null)"
 INSTANCE_ID="$(curl -sS -H "X-aws-ec2-metadata-token: ${IMDS_TOKEN}" http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)"
-RUNNER_NAME="config-spot-${INSTANCE_ID:-$(date +%s)}"
+RUNNER_NAME="telos-spot-${INSTANCE_ID:-$(date +%s)}"
 
 # ── Mint a just-in-time (JIT) runner config (config#2653 — replaces the old
 # registration-token + config.sh two-round-trip handshake) ────────────────────
@@ -305,16 +305,23 @@ if [ -n "${EXTRA_PYTHON_VERSIONS:-}" ]; then
       # dnf-installed ones do (uv's own philosophy is "use uv, not pip") —
       # confirmed live 2026-07-17: setup-python found the cached interpreter
       # fine, then `pip install` failed with "pip: command not found".
-      # ensurepip is a CPython stdlib module bundled with every build
-      # (including uv's), and creates real pip console-script binaries
-      # alongside the interpreter it's run against.
-      "$PYBIN" -m ensurepip --default-pip >/dev/null 2>&1 \
-        || log "WARN: ensurepip failed for ${EXTRA_PY_FULL}"
+      # ensurepip (tried first) FAILED live too — uv's python-build-standalone
+      # distributions ship without the bundled ensurepip wheels (a known
+      # trait of minimal/portable Python distributions). get-pip.py is the
+      # universally-reliable fallback: a self-contained bootstrapper fetched
+      # fresh from PyPA that doesn't depend on anything being pre-bundled.
+      if ! "$PYBIN" -m ensurepip --default-pip >/dev/null 2>&1; then
+        log "ensurepip unavailable for ${EXTRA_PY_FULL} (expected for uv-managed interpreters) — using get-pip.py"
+        curl -sS https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip-${PYVER}.py \
+          && "$PYBIN" /tmp/get-pip-${PYVER}.py --quiet >/dev/null 2>&1 \
+          || log "WARN: get-pip.py also failed for ${EXTRA_PY_FULL}"
+      fi
       EXTRA_PIPBIN="$(dirname "$PYBIN")/pip3"
       [ -x "$EXTRA_PIPBIN" ] || EXTRA_PIPBIN="$(dirname "$PYBIN")/pip${PYVER}"
+      [ -x "$EXTRA_PIPBIN" ] || EXTRA_PIPBIN="$(dirname "$PYBIN")/pip"
       [ -x "$EXTRA_PIPBIN" ] && ln -sf "$EXTRA_PIPBIN" "${EXTRA_PY_CACHE_DIR}/bin/pip3"
       [ -x "$EXTRA_PIPBIN" ] && ln -sf "$EXTRA_PIPBIN" "${EXTRA_PY_CACHE_DIR}/bin/pip"
-      [ -x "$EXTRA_PIPBIN" ] || log "WARN: no pip binary found for ${EXTRA_PY_FULL} after ensurepip"
+      [ -x "$EXTRA_PIPBIN" ] || log "WARN: no pip binary found for ${EXTRA_PY_FULL} after ensurepip+get-pip.py"
       touch "${TOOL_CACHE_DIR}/Python/${EXTRA_PY_FULL}/x64.complete"
       log "pre-populated tool cache for python ${EXTRA_PY_FULL} (requested ${PYVER}) via uv"
     done
