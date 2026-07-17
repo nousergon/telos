@@ -40,7 +40,11 @@ jobs:
 
   secrets:
     # raw gitleaks binary — gitleaks-action@v2 requires a paid license on org repos
-    runs-on: ubuntu-latest
+    # Self-hosted ephemeral EC2-spot runner (telos-runner-dispatcher Lambda,
+    # nousergon-data infrastructure/lambdas/telos-runner-dispatcher) — safe
+    # here specifically because this job has no Python/Node dependency (pure
+    # curl+tar+gitleaks binary), unlike test/web which stay hosted (telos#44).
+    runs-on: [self-hosted, telos-spot]
     steps:
       - uses: actions/checkout@v7
         with:
