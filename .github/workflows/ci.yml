@@ -40,21 +40,18 @@ jobs:
 
   secrets:
     # raw gitleaks binary — gitleaks-action@v2 requires a paid license on org repos.
-    # Runs on a CodeBuild-managed ephemeral GitHub Actions runner (project
-    # telos-runner, arm64/Graviton; cost-I2864 — replaces the self-hosted EC2-spot
-    # runner + telos-runner-dispatcher Lambda). Pure curl+tar+gitleaks, no
-    # Python/Node dependency, so it stays off the hosted runners (telos#44).
-    runs-on: codebuild-telos-runner-${{ github.run_id }}-${{ github.run_attempt }}
+    # Runs on GitHub-hosted ubuntu-latest: this is a PUBLIC repo, so GHA-hosted
+    # runners are free/unlimited (0 billable minutes). Self-hosting a public repo
+    # only adds paid compute + a fork-PR self-hosted-runner security exposure and
+    # saves nothing — cost-I2864.
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Run gitleaks over full history
         run: |
-          # arch-aware: CodeBuild runner is arm64/Graviton; keep x64 fallback so a
-          # future compute change can't silently pull the wrong binary (cost-I2864).
-          arch="$(uname -m)"; case "$arch" in aarch64|arm64) gl=arm64;; *) gl=x64;; esac
-          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_${gl}.tar.gz" | tar -xz gitleaks
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz | tar -xz gitleaks
           ./gitleaks detect --no-banner --redact
 
   web:
