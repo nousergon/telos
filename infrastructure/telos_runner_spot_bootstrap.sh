@@ -305,23 +305,21 @@ if [ -n "${EXTRA_PYTHON_VERSIONS:-}" ]; then
       # dnf-installed ones do (uv's own philosophy is "use uv, not pip") —
       # confirmed live 2026-07-17: setup-python found the cached interpreter
       # fine, then `pip install` failed with "pip: command not found".
-      # ensurepip (tried first) FAILED live too — uv's python-build-standalone
-      # distributions ship without the bundled ensurepip wheels (a known
-      # trait of minimal/portable Python distributions). get-pip.py is the
-      # universally-reliable fallback: a self-contained bootstrapper fetched
-      # fresh from PyPA that doesn't depend on anything being pre-bundled.
-      if ! "$PYBIN" -m ensurepip --default-pip >/dev/null 2>&1; then
-        log "ensurepip unavailable for ${EXTRA_PY_FULL} (expected for uv-managed interpreters) — using get-pip.py"
-        curl -sS https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip-${PYVER}.py \
-          && "$PYBIN" /tmp/get-pip-${PYVER}.py --quiet >/dev/null 2>&1 \
-          || log "WARN: get-pip.py also failed for ${EXTRA_PY_FULL}"
-      fi
+      # ensurepip ALSO fails outright on a uv-managed interpreter (confirmed
+      # live) — it's marked PEP 668 "externally managed" by uv, and
+      # ensurepip's internal pip invocation refuses without an override it
+      # has no flag for. get-pip.py DOES accept --break-system-packages,
+      # which is the correct override here: this is a dedicated, ephemeral,
+      # single-purpose CI box, not a shared system Python PEP 668 protects.
+      curl -sS https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip-${PYVER}.py \
+        && "$PYBIN" /tmp/get-pip-${PYVER}.py --break-system-packages --quiet \
+        || log "WARN: get-pip.py failed for ${EXTRA_PY_FULL}"
       EXTRA_PIPBIN="$(dirname "$PYBIN")/pip3"
       [ -x "$EXTRA_PIPBIN" ] || EXTRA_PIPBIN="$(dirname "$PYBIN")/pip${PYVER}"
       [ -x "$EXTRA_PIPBIN" ] || EXTRA_PIPBIN="$(dirname "$PYBIN")/pip"
       [ -x "$EXTRA_PIPBIN" ] && ln -sf "$EXTRA_PIPBIN" "${EXTRA_PY_CACHE_DIR}/bin/pip3"
       [ -x "$EXTRA_PIPBIN" ] && ln -sf "$EXTRA_PIPBIN" "${EXTRA_PY_CACHE_DIR}/bin/pip"
-      [ -x "$EXTRA_PIPBIN" ] || log "WARN: no pip binary found for ${EXTRA_PY_FULL} after ensurepip+get-pip.py"
+      [ -x "$EXTRA_PIPBIN" ] || log "WARN: no pip binary found for ${EXTRA_PY_FULL} after get-pip.py"
       touch "${TOOL_CACHE_DIR}/Python/${EXTRA_PY_FULL}/x64.complete"
       log "pre-populated tool cache for python ${EXTRA_PY_FULL} (requested ${PYVER}) via uv"
     done
