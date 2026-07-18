@@ -20,6 +20,23 @@ type OverrideMap = Record<string, number | null>;
 
 const FILE_NAME = "dashboard_adjustments.json";
 
+// Property names that must never be copied from remote/file input into a
+// plain object via bracket assignment: `obj["__proto__"] = x` walks the
+// Object.prototype accessor and mutates obj's prototype chain rather than
+// setting an own property (CodeQL js/remote-property-injection).
+// Object.fromEntries uses CreateDataProperty semantics (bypasses that
+// accessor) but we still exclude these keys so a polluted-looking entry
+// never round-trips into the persisted override file.
+const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+function toSafeOverrideMap(
+  entries: Iterable<[string, number | null]>,
+): OverrideMap {
+  return Object.fromEntries(
+    Array.from(entries).filter(([k]) => !UNSAFE_KEYS.has(k)),
+  );
+}
+
 async function resolvePath(): Promise<string> {
   const twd = process.env.TELOS_WORK_DIR?.trim();
   if (twd) {
@@ -44,13 +61,10 @@ async function loadRaw(): Promise<OverrideMap> {
     const raw = await readFile(fp, "utf8");
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     // Coerce any JSON number back to number, drop non-numeric entries
-    const out: OverrideMap = {};
-    for (const [k, v] of Object.entries(parsed)) {
-      if (v === null || typeof v === "number") {
-        out[k] = v as number | null;
-      }
-    }
-    return out;
+    const numericEntries = Object.entries(parsed).filter(
+      ([, v]) => v === null || typeof v === "number",
+    ) as [string, number | null][];
+    return toSafeOverrideMap(numericEntries);
   } catch {
     return {};
   }
@@ -74,16 +88,12 @@ export async function GET(): Promise<NextResponse<AdjustmentResponse>> {
 export async function PUT(request: NextRequest): Promise<NextResponse<AdjustmentResponse>> {
   try {
     const body = (await request.json()) as Record<string, unknown>;
-    // Validate: values must be null or finite numbers
-    const overrides: OverrideMap = {};
-    for (const [k, v] of Object.entries(body)) {
-      if (v === null) {
-        overrides[k] = null;
-      } else if (typeof v === "number" && Number.isFinite(v)) {
-        overrides[k] = v;
-      }
-      // Silently skip non-compliant entries
-    }
+    // Validate: values must be null or finite numbers; non-compliant
+    // entries (including unsafe keys) are silently skipped.
+    const validEntries = Object.entries(body).filter(
+      ([, v]) => v === null || (typeof v === "number" && Number.isFinite(v)),
+    ) as [string, number | null][];
+    const overrides = toSafeOverrideMap(validEntries);
 
     const fp = await resolvePath();
     await mkdir(path.dirname(fp), { recursive: true });
