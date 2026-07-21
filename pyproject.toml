@@ -31,7 +31,7 @@ dependencies = [
     # Ingestion layer (src/telos/ingest/) — Claude vision + tool-use extraction.
     # Imported lazily so the deterministic engine never pulls it in at import
     # time; a hard dep so CI and `pip install -e .` exercise the ingest path.
-    "anthropic>=0.116.0",
+    "anthropic>=0.117.0",
 ]
 
 [project.urls]
