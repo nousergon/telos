@@ -46,3 +46,4 @@ build/
 .coverage
 coverage.xml
 htmlcov/
+CLAUDE.md
