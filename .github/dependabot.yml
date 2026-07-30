@@ -41,6 +41,26 @@ updates:
         update-types:
           - minor
           - patch
+      # React core must stay in lockstep — Dependabot has split these before
+      # (telos-ops#30), producing unmergeable halves. Patterns match before
+      # the catch-all majors group (first match wins in Dependabot).
+      react-core:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+        update-types:
+          - major
+      # ESLint + plugins must upgrade together — ESLint 10 changed the
+      # rule-context API; plugins that predate it fail at load time.
+      eslint-core:
+        patterns:
+          - "eslint"
+          - "eslint-plugin-*"
+          - "@types/eslint*"
+        update-types:
+          - major
       majors:
         update-types:
           - major
