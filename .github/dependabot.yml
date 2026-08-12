@@ -54,9 +54,14 @@ updates:
           - major
       # ESLint + plugins must upgrade together — ESLint 10 changed the
       # rule-context API; plugins that predate it fail at load time.
+      # `eslint-config-*` is in the patterns because this project has NO
+      # direct eslint plugins: the plugins arrive transitively under
+      # eslint-config-next, so that package is the only sibling there is
+      # to move in lockstep.
       eslint-core:
         patterns:
           - "eslint"
+          - "eslint-config-*"
           - "eslint-plugin-*"
           - "@types/eslint*"
         update-types:
@@ -64,6 +69,26 @@ updates:
       majors:
         update-types:
           - major
+    ignore:
+      # ESLint 10 is held back, deliberately. eslint-config-next@16.3.0
+      # (latest) depends on eslint-plugin-react ^7.37.0, and 7.37.5
+      # (latest) still calls the `context.getFilename()` API that ESLint
+      # 10 REMOVED — so every `eslint .` run dies at rule-load time with
+      # "Error while loading rule 'react/display-name'", not on a lint
+      # finding. That is what turned telos main red on 2026-08-02 (#78)
+      # and blocked every web PR since.
+      #
+      # The eslint-core group above cannot prevent this on its own: the
+      # incompatible package is TRANSITIVE, so there is no version of
+      # eslint-config-next for Dependabot to raise alongside eslint that
+      # would make the pair compatible. Grouping only helps once upstream
+      # ships the fix; until then the major has to be refused outright.
+      #
+      # Remove this ignore (and the `~9.39.5` pin in web/package.json)
+      # when eslint-plugin-react ships ESLint 10 support — tracked in
+      # telos-ops#34, which names the check to re-run.
+      - dependency-name: "eslint"
+        versions: ["10.x"]
     cooldown:
       semver-major-days: 30
 
