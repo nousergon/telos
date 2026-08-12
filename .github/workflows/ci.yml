@@ -51,8 +51,16 @@ jobs:
           fetch-depth: 0
       - name: Run gitleaks over full history
         run: |
-          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz | tar -xz gitleaks
-          ./gitleaks detect --no-banner --redact
+          # Download to a file rather than piping into tar: a partial body on a
+          # dropped connection corrupts the extract instead of failing cleanly,
+          # and curl cannot retry a stream it has already handed to a pipe.
+          # --retry-all-errors is load-bearing — plain --retry declines to retry
+          # some connection-level failures, and 56 (connection died) is one.
+          curl -sSL --retry 5 --retry-delay 2 --retry-all-errors --retry-max-time 120 \
+            -o /tmp/gitleaks.tar.gz \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          /tmp/gitleaks detect --no-banner --redact
 
   web:
     name: tsc + lint + build (web)
