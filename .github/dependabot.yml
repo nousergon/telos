@@ -89,6 +89,22 @@ updates:
       # telos-ops#34, which names the check to re-run.
       - dependency-name: "eslint"
         versions: ["10.x"]
+      # TypeScript 7 is held back for the same shape of reason, a different
+      # package. `typescript-eslint` (transitive, under eslint-config-next)
+      # refuses to load against the TS 7 API and says so explicitly:
+      #
+      #   Error: typescript-eslint does not support TS 7.0.
+      #   ... see typescript-eslint#10940 for TS >=7.1 support
+      #
+      # Measured 2026-08-12 on telos#86 (typescript 6.0.3 -> 7.0.2): `tsc
+      # --noEmit` passes and `next build` succeeds — it is only `eslint .`
+      # that dies, at plugin-load time. So the bump looks harmless right up
+      # to the check that fails, which is why it needs an ignore rather than
+      # a note.
+      #
+      # Remove when typescript-eslint ships TS 7 support — telos-ops#35.
+      - dependency-name: "typescript"
+        versions: ["7.x"]
     cooldown:
       semver-major-days: 30
 
