@@ -27,7 +27,7 @@ dependencies = [
     "pyyaml>=6.0.3",
     # Output layer (src/telos/forms/) — fill official IRS AcroForm PDFs. Core to
     # the "official-form output at the back" of the pipeline, so a hard dep.
-    "pypdf>=6.15.0",
+    "pypdf>=6.16.1",
     # Ingestion layer (src/telos/ingest/) — Claude vision + tool-use extraction.
     # Imported lazily so the deterministic engine never pulls it in at import
     # time; a hard dep so CI and `pip install -e .` exercise the ingest path.
@@ -42,7 +42,7 @@ Repository = "https://github.com/nousergon/telos"
 dev = [
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
-    "ruff>=0.16.2",
+    "ruff>=0.16.3",
     # Synthetic-fixture generation for the ingestion tests (fake W-2 PDFs).
     "reportlab>=5.0.0",
 ]
