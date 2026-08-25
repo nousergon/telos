@@ -42,7 +42,7 @@ Repository = "https://github.com/nousergon/telos"
 dev = [
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
-    "ruff>=0.16.3",
+    "ruff>=0.16.4",
     # Synthetic-fixture generation for the ingestion tests (fake W-2 PDFs).
     "reportlab>=5.0.0",
 ]
