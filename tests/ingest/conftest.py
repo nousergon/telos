@@ -1,4 +1,11 @@
-"""Shared fixtures for ingestion tests — a mock Anthropic client (no network)."""
+"""Shared fixtures for ingestion tests — a mock krepis LLMClient (no network).
+
+Since the 2026-08-29 krepis-router migration (src/telos/ingest/extract.py),
+``extract_w2`` calls ``client.structured(...)`` — the krepis
+``LLMClient``-shaped surface — rather than an ``anthropic.Anthropic()``
+Messages client. ``MockClient`` here mirrors that surface directly (not the
+retired ``anthropic`` SDK shape), so tests exercise the real call contract.
+"""
 
 from __future__ import annotations
 
@@ -7,33 +14,22 @@ from typing import Any
 
 
 @dataclass
-class _ToolUseBlock:
-    input: dict[str, Any]
-    type: str = "tool_use"
+class _StructuredResult:
+    data: dict[str, Any]
 
 
-@dataclass
-class _Response:
-    content: list[Any]
-
-
-class MockMessages:
-    """Records the outbound request and returns a canned tool_use response."""
+class MockClient:
+    """Mock krepis ``LLMClient`` — records the outbound ``structured()``
+    call and returns a canned parsed payload. Asserts no real network call
+    is made (nothing here can reach one)."""
 
     def __init__(self, tool_input: dict[str, Any]) -> None:
         self._tool_input = tool_input
         self.last_request: dict[str, Any] | None = None
 
-    def create(self, **kwargs: Any) -> _Response:
+    def structured(self, **kwargs: Any) -> _StructuredResult:
         self.last_request = kwargs
-        return _Response(content=[_ToolUseBlock(input=dict(self._tool_input))])
-
-
-class MockClient:
-    """Mock ``anthropic.Anthropic()`` — asserts no real network call is made."""
-
-    def __init__(self, tool_input: dict[str, Any]) -> None:
-        self.messages = MockMessages(tool_input)
+        return _StructuredResult(data=dict(self._tool_input))
 
 
 def w2_tool_input(**overrides: Any) -> dict[str, str]:
