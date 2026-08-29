@@ -1,10 +1,10 @@
 """Pre-API identity redaction.
 
-Nothing leaves this process toward the Anthropic API until it has passed
-through here. The identity (SSN, employer EIN, broker account number) is
-extracted LOCALLY, replaced with the literal token :data:`REDACTION_TOKEN`,
-and re-joined onto the extracted model LOCALLY after the vision call returns.
-The outbound API payload provably contains no SSN.
+Nothing leaves this process toward the krepis router edge until it has
+passed through here. The identity (SSN, employer EIN, broker account number)
+is extracted LOCALLY, replaced with the literal token :data:`REDACTION_TOKEN`,
+and re-joined onto the extracted model LOCALLY after the extraction call
+returns. The outbound API payload provably contains no SSN.
 
 Two layers:
 

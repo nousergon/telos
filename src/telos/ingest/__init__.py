@@ -1,10 +1,14 @@
 """Document ingestion layer.
 
-LLM/vision extraction lives HERE, never in ``telos.engine`` (the engine is
-pure deterministic arithmetic). Flow: redact identities before any API call →
-Claude vision + tool-use structured extraction → cross-foot against the
+LLM extraction lives HERE, never in ``telos.engine`` (the engine is pure
+deterministic arithmetic). Flow: redact identities before any API call →
+krepis router-edge tool-use structured extraction → cross-foot against the
 document's own totals → human-confirm loop with freeze-with-hash and
 corrected-document re-ingest.
+
+Routing addresses a krepis router model_group (a capability tier), never a
+model id or provider — see ``telos.ingest.extract.ROUTER_GROUP`` and its
+module docstring for the 2026-08-29 krepis-router migration.
 """
 
 from __future__ import annotations
@@ -18,7 +22,8 @@ from telos.ingest.confirm import (
     side_by_side,
 )
 from telos.ingest.extract import (
-    DEFAULT_MODEL,
+    ExtractionUnavailable,
+    RouterUnresolvable,
     W2ExtractionResult,
     build_w2_request,
     extract_w2,
@@ -38,15 +43,16 @@ from telos.ingest.schema import (
 )
 
 __all__ = [
-    "DEFAULT_MODEL",
     "REDACTION_TOKEN",
     "CrossFootError",
     "ExtractedConsolidated1099",
     "ExtractedW2",
+    "ExtractionUnavailable",
     "FieldView",
     "FrozenExtraction",
     "PromptNotFoundError",
     "RedactionResult",
+    "RouterUnresolvable",
     "W2ExtractionResult",
     "assert_no_ssn",
     "build_w2_request",
