@@ -35,7 +35,7 @@ dependencies = [
     # and `pip install -e .` exercise the ingest path. [openai] only — the
     # router edge speaks the OpenAI-compatible wire and no direct-anthropic
     # registry entry exists to route to.
-    "krepis[openai]>=0.59.14",
+    "krepis[openai]>=0.59.44",
 ]
 
 [project.urls]
