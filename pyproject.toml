@@ -23,7 +23,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "pydantic>=2.13.4",
+    "pydantic>=2.13.5",
     "pyyaml>=6.0.3",
     # Output layer (src/telos/forms/) — fill official IRS AcroForm PDFs. Core to
     # the "official-form output at the back" of the pipeline, so a hard dep.
@@ -35,7 +35,7 @@ dependencies = [
     # and `pip install -e .` exercise the ingest path. [openai] only — the
     # router edge speaks the OpenAI-compatible wire and no direct-anthropic
     # registry entry exists to route to.
-    "krepis[openai]>=0.59.14",
+    "krepis[openai]>=0.59.44",
 ]
 
 [project.urls]
