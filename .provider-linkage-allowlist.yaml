@@ -1,0 +1,29 @@
+# .provider-linkage-allowlist.yaml — pre-cleared provider-linkage matches
+# (alpha-engine-config-I9305/I9310). Schema: nousergon-lib
+# scripts/provider_linkage_guard.py::load_allowlist.
+schema_version: 1
+entries:
+  - path: src/telos/ingest/extract.py
+    pattern: "anthropic:sdk_client"
+    reason: >-
+      Module-docstring PROSE describing the pre-2026-08-29-migration pattern
+      this module used to have (telos-PR101) — a historical note, not a live
+      construction. The guard matches string-literal content inside
+      docstrings (only `#`/`//` comments are exempted), and this docstring
+      quotes the retired shape twice: "constructed ``anthropic.Anthropic()``
+      directly" and "krepis's public ``LLMClient``... surface" contrasted
+      against the old one. No `anthropic` import or client construction
+      exists anywhere in this file post-migration.
+    expires: "2027-02-28"
+    tracking: alpha-engine-config-I9305
+
+  - path: tests/ingest/conftest.py
+    pattern: "anthropic:sdk_client"
+    reason: >-
+      Module-docstring PROSE (same shape as the extract.py entry above):
+      "rather than an ``anthropic.Anthropic()`` Messages client" explains why
+      MockClient mirrors the krepis LLMClient surface instead of the retired
+      Anthropic SDK shape. No `anthropic` import or client construction
+      exists anywhere in this file.
+    expires: "2027-02-28"
+    tracking: alpha-engine-config-I9305
