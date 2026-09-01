@@ -16,3 +16,14 @@ entries:
       exists anywhere in this file post-migration.
     expires: "2027-02-28"
     tracking: alpha-engine-config-I9305
+
+  - path: tests/ingest/conftest.py
+    pattern: "anthropic:sdk_client"
+    reason: >-
+      Module-docstring PROSE (same shape as the extract.py entry above):
+      "rather than an ``anthropic.Anthropic()`` Messages client" explains why
+      MockClient mirrors the krepis LLMClient surface instead of the retired
+      Anthropic SDK shape. No `anthropic` import or client construction
+      exists anywhere in this file.
+    expires: "2027-02-28"
+    tracking: alpha-engine-config-I9305
