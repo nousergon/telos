@@ -27,3 +27,15 @@ entries:
       exists anywhere in this file.
     expires: "2027-02-28"
     tracking: alpha-engine-config-I9305
+
+  # -- `dist` class, enforcement flip (alpha-engine-config-I10225) --
+
+  - path: pyproject.toml
+    pattern: "openai:dist"
+    reason: >-
+      `krepis[openai]>=0.59.44` -- the `openai` extra is krepis's own declared
+      transport dependency for the router edge's OpenAI-compatible wire
+      (krepis.llm.LLMClient), pulled in through the router package. No module
+      in this repo imports `openai` directly.
+    expires: "2026-12-07"
+    tracking: alpha-engine-config-I10225
