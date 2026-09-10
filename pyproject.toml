@@ -68,7 +68,11 @@ markers = [
 source = ["telos"]
 
 [tool.coverage.report]
-fail_under = 90
+# Raised 90 -> 98 on 2026-09-10 (repository-baseline-policy.md §4.2 C3
+# ratchet) against a measured 98.34% — a floor is raised as coverage improves
+# and never lowered to make a change pass. tests/test_coverage_scope.py
+# protects this value and the measurement scope it applies to.
+fail_under = 98
 show_missing = true
 
 [tool.ruff]
