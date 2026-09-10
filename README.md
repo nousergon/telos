@@ -5,8 +5,8 @@
 > The tool that completes the year.
 
 [![CI](https://github.com/nousergon/telos/actions/workflows/ci.yml/badge.svg)](https://github.com/nousergon/telos/actions/workflows/ci.yml)
-[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
+[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/nousergon/telos/badges/coverage.json)](https://github.com/nousergon/telos/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/nousergon/telos)](LICENSE)
 [![Status: Pre-Alpha](https://img.shields.io/badge/status-pre--alpha-orange.svg)](#status)
 
 **A deterministic personal tax engine.** LLM document ingestion in front, pure-code
@@ -71,7 +71,7 @@ git clone https://github.com/nousergon/telos.git
 cd telos
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-pytest          # 88 tests, coverage gate 90%
+pytest          # 483 tests, coverage gate 98% (measured over the whole telos package)
 ruff check .
 ```
 
