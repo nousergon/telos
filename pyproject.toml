@@ -35,7 +35,7 @@ dependencies = [
     # and `pip install -e .` exercise the ingest path. [openai] only — the
     # router edge speaks the OpenAI-compatible wire and no direct-anthropic
     # registry entry exists to route to.
-    "krepis[openai]>=0.59.64",
+    "krepis[openai]>=0.59.71",
 ]
 
 [project.urls]
@@ -46,7 +46,7 @@ Repository = "https://github.com/nousergon/telos"
 dev = [
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
-    "ruff>=0.16.8",
+    "ruff>=0.16.9",
     # Synthetic-fixture generation for the ingestion tests (fake W-2 PDFs).
     "reportlab>=5.0.1",
 ]
