@@ -48,7 +48,7 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.17.1",
     # Synthetic-fixture generation for the ingestion tests (fake W-2 PDFs).
-    "reportlab>=5.0.1",
+    "reportlab>=5.1.0",
 ]
 
 [tool.setuptools.packages.find]
