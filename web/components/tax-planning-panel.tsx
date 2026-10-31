@@ -30,12 +30,32 @@ export function TaxPlanningPanel({ planning, ccy = "USD" }: { planning: TaxPlann
   }
 
   const { projection } = planning;
+  // Payment guidance only from a projection inside its freshness budget
+  // (telos-ops#52); otherwise the dated figures stay, the advice does not.
+  const guidanceWithheld =
+    planning.freshness === "current"
+      ? null
+      : planning.freshness === "stale"
+        ? `This projection is ${planning.age_days} days old — payment guidance withheld until it is re-run.`
+        : planning.freshness === "future"
+          ? `This projection is dated after today (${projection.as_of}) — payment guidance withheld.`
+          : planning.freshness === "closed"
+            ? `Tax year ${projection.tax_year}'s last estimated payment was due Jan 15, ${projection.tax_year + 1} — no current guidance.`
+            : "This projection's freshness is unknown — payment guidance withheld.";
 
   return (
     <Section
       title="Tax planning"
       note={`TY${projection.tax_year} projection · as of ${isoDate(projection.as_of)} · ${projection.pack_status} parameters`}
     >
+      {guidanceWithheld ? (
+        <div className="mb-3 rounded-md border border-line bg-surface px-4 py-3 text-sm">
+          <span className="font-medium">{guidanceWithheld}</span>
+          <p className="mt-1 text-xs text-muted">
+            Re-run <code>python -m telos.planning</code> and sync the artifact for current guidance.
+          </p>
+        </div>
+      ) : (
       <div
         className={`mb-3 rounded-md border px-4 py-3 text-sm ${
           projection.headline.payment_recommended
@@ -53,6 +73,7 @@ export function TaxPlanningPanel({ planning, ccy = "USD" }: { planning: TaxPlann
         ) : null}
         <p className="mt-1 text-xs text-muted">{projection.headline.message}</p>
       </div>
+      )}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard
           label="Projected total tax"

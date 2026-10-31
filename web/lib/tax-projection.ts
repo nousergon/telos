@@ -3,27 +3,40 @@ import "server-only";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import type { TaxPlanningState, TaxProjection } from "@/lib/types";
+import { compileContract, gradeProjection, type ContractValidator } from "@/lib/tax-projection-contract";
+import type { TaxPlanningState } from "@/lib/types";
 
-const SUPPORTED_SCHEMA_MAJOR = 1;
+const MISSING: TaxPlanningState = {
+  stale: true,
+  schema_error: null,
+  projection: null,
+  freshness: "unknown",
+  age_days: null,
+};
 
-function schemaError(projection: TaxProjection): string | null {
-  const version = String(projection.schema_version ?? "");
-  const major = version.split(".", 1)[0];
-  if (!/^\d+$/.test(major)) {
-    return `tax_projection artifact has no parseable schema_version (${JSON.stringify(version)})`;
+let validator: Promise<ContractValidator> | null = null;
+
+/** The shared contract (`contracts/tax_projection.schema.json`), compiled once. */
+function contract(): Promise<ContractValidator> {
+  if (!validator) {
+    const configured = process.env.TAX_PROJECTION_SCHEMA_PATH;
+    const schemaPath = configured
+      ? path.resolve(configured)
+      : path.resolve(process.cwd(), "../contracts/tax_projection.schema.json");
+    validator = readFile(schemaPath, "utf8").then((text) => compileContract(JSON.parse(text)));
+    validator.catch(() => {
+      validator = null; // retry on the next request rather than caching a failure
+    });
   }
-  if (Number(major) !== SUPPORTED_SCHEMA_MAJOR) {
-    return (
-      `tax_projection schema_version ${version} is unsupported ` +
-      `(this build reads major ${SUPPORTED_SCHEMA_MAJOR}.x) — update the dashboard ` +
-      `or re-emit the artifact with a compatible telos version`
-    );
-  }
-  return null;
+  return validator;
 }
 
-/** Read the last-good TaxProjection artifact from disk (M0 contract — no telos import). */
+/**
+ * Read the last-good TaxProjection artifact from disk (M0 contract — no telos
+ * import), validate it against the shared contract and grade its freshness
+ * (`tax-projection-contract.ts`). An unreadable contract fails closed: the
+ * artifact is never shown unvalidated.
+ */
 export async function loadTaxPlanning(): Promise<TaxPlanningState> {
   const configured = process.env.TAX_PROJECTION_PATH;
   const artifactPath = configured
@@ -34,25 +47,25 @@ export async function loadTaxPlanning(): Promise<TaxPlanningState> {
   try {
     raw = await readFile(artifactPath, "utf8");
   } catch {
-    return { stale: true, schema_error: null, projection: null };
+    return MISSING;
   }
 
   let doc: unknown;
   try {
     doc = JSON.parse(raw);
   } catch {
-    return { stale: true, schema_error: null, projection: null };
+    return MISSING;
   }
 
-  if (!doc || typeof doc !== "object" || Array.isArray(doc)) {
-    return { stale: true, schema_error: null, projection: null };
+  let validate: ContractValidator;
+  try {
+    validate = await contract();
+  } catch (exc) {
+    return {
+      ...MISSING,
+      stale: false,
+      schema_error: `tax_projection contract could not be loaded (${String(exc)}) — the artifact is not shown unvalidated`,
+    };
   }
-
-  const projection = doc as TaxProjection;
-  const err = schemaError(projection);
-  if (err) {
-    return { stale: false, schema_error: err, projection: null };
-  }
-
-  return { stale: false, schema_error: null, projection };
+  return gradeProjection(doc, validate, new Date());
 }
