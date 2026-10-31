@@ -39,10 +39,20 @@ export type TaxProjection = {
   };
 };
 
+/**
+ * How far the projection's payment guidance can be trusted (telos-ops#52):
+ * `current` — within the freshness budget; `stale` — older than it; `future` —
+ * dated after today; `closed` — the tax year's last installment date has
+ * passed; `unknown` — no valid projection to grade.
+ */
+export type TaxProjectionFreshness = "current" | "stale" | "future" | "closed" | "unknown";
+
 export type TaxPlanningState = {
   stale: boolean;
   schema_error: string | null;
   projection: TaxProjection | null;
+  freshness: TaxProjectionFreshness;
+  age_days: number | null;
 };
 
 export type MetronTaxSummary = {
