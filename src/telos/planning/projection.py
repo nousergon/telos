@@ -85,16 +85,15 @@ def build_full_year_inputs(scenario: PlanningScenario) -> FullReturnInputs:
         lots.append(_aggregate_lot(scenario.st_net_gain, Term.SHORT, scenario.tax_year))
     if scenario.lt_net_gain != _ZERO:
         lots.append(_aggregate_lot(scenario.lt_net_gain, Term.LONG, scenario.tax_year))
-    has_capital_activity = bool(lots) or (
-        scenario.st_loss_carryover > _ZERO or scenario.lt_loss_carryover > _ZERO
-    )
+    # Carryovers reach Schedule D on their own: the engine treats them as capital
+    # activity (telos-ops#49), so no empty-lots sentinel is needed here.
     return FullReturnInputs(
         tax_year=scenario.tax_year,
         filing_status=scenario.filing_status,
         w2s=scenario.w2s,
         forms_1099_int=scenario.forms_1099_int,
         forms_1099_div=scenario.forms_1099_div,
-        realized_lots=RealizedLots(lots=tuple(lots)) if has_capital_activity else None,
+        realized_lots=RealizedLots(lots=tuple(lots)) if lots else None,
         capital_gain_distributions=scenario.capital_gain_distributions,
         st_loss_carryover=scenario.st_loss_carryover,
         lt_loss_carryover=scenario.lt_loss_carryover,

@@ -46,12 +46,20 @@ def duplex_schedule_e(tax_year=2026, net_income=None):
     )
 
 
+def _w2(**fields) -> W2:
+    """A synthetic W-2 with box 5/6 filled consistently (box 5 = box 1, box 6 at the
+    1.45% regular rate). A full return refuses a W-2 without them (telos-ops#50)."""
+    fields.setdefault("medicare_wages", fields["wages"])
+    fields.setdefault("medicare_tax_withheld", (fields["wages"] * D("0.0145")).quantize(D("0.01")))
+    return W2(**fields)
+
+
 def scenario(**overrides) -> PlanningScenario:
     base = dict(
         tax_year=2026,
         as_of="2026-07-01",
         filing_status=FilingStatus.SINGLE,
-        w2s=(W2(employer="SYNTH", wages=D(100_000), federal_income_tax_withheld=D(8_000)),),
+        w2s=(_w2(employer="SYNTH", wages=D(100_000), federal_income_tax_withheld=D(8_000)),),
         prior_year_agi=D(90_000),
         prior_year_tax=D(13_000),
     )
@@ -138,7 +146,7 @@ class TestPaymentsAndHarborForks:
         outcome = project(
             scenario(
                 w2s=(
-                    W2(
+                    _w2(
                         employer="SYNTH",
                         wages=D(100_000),
                         federal_income_tax_withheld=D(20_000),
@@ -170,7 +178,7 @@ class TestPaymentsAndHarborForks:
         as_wages = project(
             scenario(
                 w2s=(
-                    W2(
+                    _w2(
                         employer="SYNTH",
                         wages=D(150_000),
                         federal_income_tax_withheld=D(8_000),
@@ -186,7 +194,7 @@ class TestPaymentsAndHarborForks:
     def test_projection_monotonic_in_wages(self):
         taxes = [
             project(
-                scenario(w2s=(W2(employer="SYNTH", wages=D(w)),)), PACK_2026
+                scenario(w2s=(_w2(employer="SYNTH", wages=D(w)),)), PACK_2026
             ).artifact.projected.total_tax
             for w in (50_000, 150_000, 400_000)
         ]
@@ -224,6 +232,8 @@ class TestCliAndReport:
                     '  - employer: "SYNTH"',
                     '    wages: "100000"',
                     '    federal_income_tax_withheld: "8000"',
+                    '    medicare_wages: "100000"',
+                    '    medicare_tax_withheld: "1450"',
                     'prior_year_agi: "90000"',
                     'prior_year_tax: "13000"',
                 ]

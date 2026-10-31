@@ -134,6 +134,8 @@ def build_actuals_scenario_yaml(export: MetronActualsExport) -> str:
         '  - employer: "TODO"  # TODO expectations',
         '    wages: "0"  # TODO expectations — wages to date + expected full-year remainder',
         '    federal_income_tax_withheld: "0"  # TODO expectations',
+        '    medicare_wages: "0"  # TODO expectations — W-2 box 5 (not box 1)',
+        '    medicare_tax_withheld: "0"  # TODO expectations — W-2 box 6',
         "",
         "# Realized capital gains, netted by term from the Metron realized-lots",
         f"# export as of {export.as_of} (Form 8949 gain: proceeds - cost_basis +",

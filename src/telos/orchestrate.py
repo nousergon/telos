@@ -34,6 +34,7 @@ from telos.engine import (
     Form8960Result,
     Form8995AInputs,
     Form8995AResult,
+    MissingMedicareWagesError,
     QbiBusiness,
     ScheduleAInputs,
     ScheduleAResult,
@@ -54,6 +55,36 @@ from telos.models import W2, FilingStatus, Form1099Div, Form1099Int
 from telos.params import ParamPack
 
 _ZERO = Decimal(0)
+
+
+class TaxYearMismatchError(ValueError):
+    """The inputs and the parameter pack name different tax years (telos-ops#50)."""
+
+
+def _admit(inputs: FullReturnInputs, pack: ParamPack) -> None:
+    """Refuse a return the engine cannot compute correctly, before any form runs.
+
+    This is the one admission check for every full-return entry point (planning,
+    replay, direct callers), so none of them depends on an adapter having checked
+    first (telos-ops#50):
+
+    - the federal pack must be for the inputs' tax year: another year's brackets,
+      thresholds and deductions produce a plausible, wrong return;
+    - every W-2 must carry box 5 and box 6. Form 8959 refuses to run without them, and
+      the engine used to skip it whenever NO W-2 had box 5, so missing facts became
+      zero Additional Medicare Tax. A missing box is a missing fact, not a zero.
+    """
+    if inputs.tax_year != pack.tax_year:
+        raise TaxYearMismatchError(
+            f"inputs are TY{inputs.tax_year} but the federal pack is TY{pack.tax_year}; "
+            "a return on another year's constants is silently wrong"
+        )
+    for w in inputs.w2s:
+        if w.medicare_wages is None or w.medicare_tax_withheld is None:
+            raise MissingMedicareWagesError(
+                f"W-2 {w.employer!r} lacks box 5/6 (medicare_wages / medicare_tax_withheld); "
+                "a full return needs them for Form 8959 and will not treat them as zero"
+            )
 
 
 class ScheduleAItems(BaseModel):
@@ -116,11 +147,26 @@ class FederalReturn:
     amt: AmtScreenResult
 
 
+def _has_capital_activity(inputs: FullReturnInputs) -> bool:
+    """Whether Schedule D applies: any realized lots (even an explicitly empty set),
+    capital gain distributions, or a capital-loss carryover. A carryover alone is
+    capital activity: omitting it would drop up to $3,000 of deductible loss
+    (telos-ops#49), and whether the caller passed an empty lot container must not
+    change the return."""
+    return (
+        inputs.realized_lots is not None
+        or inputs.capital_gain_distributions > 0
+        or inputs.st_loss_carryover > 0
+        or inputs.lt_loss_carryover > 0
+    )
+
+
 def compute_federal_return(inputs: FullReturnInputs, pack: ParamPack) -> FederalReturn:
+    _admit(inputs, pack)
     fs = inputs.filing_status
 
     schd: Optional[ScheduleDResult] = None  # noqa: UP045
-    if inputs.realized_lots is not None or inputs.capital_gain_distributions > 0:
+    if _has_capital_activity(inputs):
         schd = schedule_d(
             ScheduleDInputs(
                 filing_status=fs,
@@ -182,7 +228,7 @@ def compute_federal_return(inputs: FullReturnInputs, pack: ParamPack) -> Federal
     f59: Optional[Form8959Result] = None  # noqa: UP045
     other_taxes: list[tuple[str, Decimal]] = []
     line25c = _ZERO
-    if any(w.medicare_wages is not None for w in inputs.w2s):
+    if inputs.w2s:  # every W-2 carries box 5/6 (``_admit``), so 8959 always applies
         f59 = form8959(w2s=inputs.w2s, filing_status=fs, pack=pack)
         if f59.additional_medicare_tax.value > 0:
             other_taxes.append(("form8959:additional_medicare",
