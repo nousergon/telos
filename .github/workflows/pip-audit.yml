@@ -8,11 +8,15 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-  schedule:
-    # Daily at 14:00 UTC — CVE feeds publish on a rolling cadence; daily
-    # is the smallest cadence that's actually useful (mirrors mnemon's
-    # pip-audit.yml and nousergon-lib's/krepis's/vires's, all config#2530).
-    - cron: "0 14 * * *"
+  # PAUSED 2026-10-31 (alpha-engine-config-I12982): telos is temporarily archived
+  # until 2027-01-04 (Brian). The daily cron is commented out, not deleted;
+  # workflow_dispatch below stays so it can be run by hand. To reopen, restore:
+  #
+  # schedule:
+  #   # Daily at 14:00 UTC — CVE feeds publish on a rolling cadence; daily
+  #   # is the smallest cadence that's actually useful (mirrors mnemon's
+  #   # pip-audit.yml and nousergon-lib's/krepis's/vires's, all config#2530).
+  #   - cron: "0 14 * * *"
   workflow_dispatch:
 
 permissions:
